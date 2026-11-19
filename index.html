@@ -1,0 +1,3743 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#060816" />
+  <meta name="description" content="ARKATYPE VOCAB — Vizuální výuková arkáda na procvičování anglické slovní zásoby psaním." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>ARKATYPE VOCAB — Vizuální Výuková Arkáda</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23060816'/%3E%3Crect x='4' y='4' width='56' height='56' rx='9' fill='none' stroke='%2300f3ff' stroke-width='2.5'/%3E%3Ccircle cx='32' cy='27' r='12' fill='%23ff3b5c'/%3E%3Cpath d='M32 15c2-5 7-6 9-4-2 4-6 5-9 4z' fill='%234ade80'/%3E%3Cline x1='32' y1='49' x2='32' y2='39' stroke='%2300ff9d' stroke-width='2.5' stroke-linecap='round'/%3E%3Crect x='15' y='50' width='34' height='6' rx='3' fill='%2300f3ff'/%3E%3C/svg%3E" />
+  <style>
+    :root {
+      --bg-deep: #040610;
+      --bg-panel: #090e21;
+      --neon-cyan: #00f3ff;
+      --neon-pink: #ff2a85;
+      --neon-green: #00ff9d;
+      --neon-gold: #ffd166;
+      --neon-red: #ff3b5c;
+      --text-main: #eaf6ff;
+      --text-dim: #7f95b8;
+      --font-ui: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', 'Courier New', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(0, 243, 255, 0.12), transparent 55%),
+        radial-gradient(circle at 20% 80%, rgba(255, 42, 133, 0.10), transparent 50%),
+        linear-gradient(180deg, #03050d 0%, #070b1a 55%, #040610 100%);
+      color: var(--text-main);
+      font-family: var(--font-ui);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .arcade-cabinet {
+      --stage-w: min(96vw, calc((96dvh - 76px) * 640 / 820));
+      width: calc(var(--stage-w) + 6px);
+      display: flex;
+      flex-direction: column;
+      border-radius: 14px;
+      border: 2px solid rgba(0, 243, 255, 0.55);
+      background: #060918;
+      box-shadow:
+        0 0 28px rgba(0, 243, 255, 0.22),
+        0 0 70px rgba(255, 42, 133, 0.10),
+        inset 0 0 18px rgba(0, 243, 255, 0.12);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* HUD Bar */
+    .hud-bar {
+      height: 68px;
+      padding: 8px 10px;
+      background: linear-gradient(180deg, #0d1430 0%, #070b1d 100%);
+      border-bottom: 1px solid rgba(0, 243, 255, 0.35);
+      display: grid;
+      grid-template-columns: 0.95fr 0.72fr 0.78fr 1.05fr 0.82fr auto;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .hud-cell {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .hud-label {
+      font-size: 9.5px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .hud-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--text-main);
+      line-height: 1.25;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    .hud-sub {
+      font-size: 10.5px;
+      font-weight: 700;
+      color: var(--neon-gold);
+    }
+
+    .score-val {
+      color: var(--neon-cyan);
+      text-shadow: 0 0 10px rgba(0, 243, 255, 0.45);
+    }
+
+    .timer-val {
+      color: var(--neon-green);
+    }
+
+    .timer-val.urgent {
+      color: var(--neon-red);
+      text-shadow: 0 0 10px rgba(255, 59, 92, 0.65);
+    }
+
+    .wave-progress {
+      width: 100%;
+      max-width: 72px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-top: 3px;
+    }
+
+    .wave-progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-green));
+      box-shadow: 0 0 8px var(--neon-cyan);
+      transition: width 0.2s ease;
+    }
+
+    .shield-pips {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      margin-top: 4px;
+    }
+
+    .shield-pip {
+      width: 14px;
+      height: 9px;
+      border-radius: 3px;
+      background: linear-gradient(180deg, #52fbff, #00a8cc);
+      border: 1px solid #9efdff;
+      box-shadow: 0 0 8px rgba(0, 243, 255, 0.7);
+      transition: all 0.25s ease;
+    }
+
+    .shield-pip.lost {
+      background: rgba(255, 59, 92, 0.12);
+      border-color: rgba(255, 59, 92, 0.35);
+      box-shadow: none;
+    }
+
+    .shield-pip.low {
+      background: linear-gradient(180deg, #ff748c, #ff2a55);
+      border-color: #ffb3c0;
+      box-shadow: 0 0 10px rgba(255, 42, 85, 0.85);
+    }
+
+    .practice-badge {
+      display: none;
+      margin-top: 3px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--neon-green);
+      background: rgba(0, 255, 157, 0.12);
+      border: 1px solid rgba(0, 255, 157, 0.35);
+      border-radius: 5px;
+      padding: 1px 6px;
+      width: fit-content;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .icon-btn {
+      background: rgba(0, 243, 255, 0.08);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      color: var(--text-main);
+      border-radius: 8px;
+      height: 34px;
+      padding: 0 8px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .icon-btn:hover {
+      background: rgba(0, 243, 255, 0.2);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.35);
+    }
+
+    .icon-btn.active {
+      border-color: rgba(0, 255, 157, 0.55);
+      background: rgba(0, 255, 157, 0.12);
+      color: #a6ffdc;
+    }
+
+    .icon-btn.muted {
+      border-color: rgba(255, 59, 92, 0.45);
+      color: #ff8ea1;
+      background: rgba(255, 59, 92, 0.10);
+    }
+
+    .icon-btn.finish-btn {
+      border-color: rgba(255, 209, 102, 0.5);
+      background: rgba(255, 209, 102, 0.12);
+      color: #ffe399;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Stage / Playfield */
+    .stage-wrap {
+      position: relative;
+      width: var(--stage-w);
+      aspect-ratio: 640 / 820;
+      background: #040612;
+      overflow: hidden;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .crt-scanlines {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0) 0px,
+        rgba(0, 0, 0, 0) 2px,
+        rgba(0, 10, 24, 0.14) 3px,
+        rgba(0, 10, 24, 0.14) 4px
+      );
+      z-index: 2;
+    }
+
+    /* Overlays */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      background: rgba(4, 7, 20, 0.88);
+      backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+      transition: opacity 0.22s ease;
+    }
+
+    .panel {
+      width: 100%;
+      max-width: 540px;
+      max-height: calc(100% - 8px);
+      overflow-y: auto;
+      background: linear-gradient(180deg, rgba(13, 21, 48, 0.97) 0%, rgba(7, 11, 28, 0.99) 100%);
+      border: 1.5px solid rgba(0, 243, 255, 0.55);
+      border-radius: 16px;
+      padding: 18px 18px;
+      box-shadow:
+        0 0 36px rgba(0, 243, 255, 0.22),
+        inset 0 0 24px rgba(0, 243, 255, 0.08);
+      text-align: center;
+    }
+
+    .logo-title {
+      font-family: var(--font-mono);
+      font-size: clamp(26px, 4.8vw, 36px);
+      font-weight: 900;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, #00f3ff 0%, #ffffff 48%, #00ff9d 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 0 14px rgba(0, 243, 255, 0.55));
+      margin-bottom: 2px;
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: var(--neon-gold);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* Mode Selector Tabs */
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .mode-tab {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1.5px solid rgba(255, 255, 255, 0.14);
+      border-radius: 10px;
+      padding: 9px 10px;
+      color: var(--text-dim);
+      font-family: var(--font-ui);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      transition: all 0.15s ease;
+    }
+
+    .mode-tab span.mode-sub {
+      font-size: 10.5px;
+      font-weight: 500;
+      opacity: 0.85;
+    }
+
+    .mode-tab:hover {
+      border-color: rgba(0, 243, 255, 0.45);
+      color: var(--text-main);
+    }
+
+    .mode-tab.selected {
+      background: rgba(0, 243, 255, 0.12);
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.25);
+    }
+
+    .mode-tab[data-mode="PRACTICE"].selected {
+      background: rgba(0, 255, 157, 0.12);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 14px rgba(0, 255, 157, 0.25);
+    }
+
+    .config-card {
+      background: rgba(4, 10, 28, 0.72);
+      border: 1px solid rgba(0, 243, 255, 0.22);
+      border-radius: 11px;
+      padding: 11px 12px;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    .config-title {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--neon-cyan);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .brief-list {
+      font-size: 12.5px;
+      line-height: 1.48;
+      color: #cfe4ff;
+      margin-bottom: 10px;
+    }
+
+    .brief-list strong {
+      color: #ffffff;
+    }
+
+    .time-pills {
+      display: flex;
+      gap: 8px;
+    }
+
+    .time-pill {
+      flex: 1;
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      background: rgba(0, 243, 255, 0.06);
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+
+    .time-pill.selected {
+      background: rgba(0, 243, 255, 0.24);
+      border-color: var(--neon-cyan);
+      color: #ffffff;
+      box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+    }
+
+    /* Practice Settings: Speed Slider & Letter Filter */
+    .speed-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .speed-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--neon-green);
+      cursor: pointer;
+    }
+
+    .speed-badge {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      color: var(--neon-green);
+      min-width: 118px;
+      text-align: right;
+    }
+
+    .quick-filter-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .quick-btn {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(0, 255, 157, 0.35);
+      background: rgba(0, 255, 157, 0.08);
+      color: #b7ffe2;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .quick-btn:hover {
+      background: rgba(0, 255, 157, 0.2);
+    }
+
+    .letter-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+
+    .letter-btn {
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .letter-btn:hover {
+      border-color: rgba(0, 255, 157, 0.6);
+      color: #ffffff;
+    }
+
+    .letter-btn.selected {
+      background: rgba(0, 255, 157, 0.2);
+      border-color: var(--neon-green);
+      color: #ffffff;
+      box-shadow: 0 0 8px rgba(0, 255, 157, 0.25);
+    }
+
+    .selection-summary {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--neon-gold);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cta-btn {
+      width: 100%;
+      padding: 12px 18px;
+      border: none;
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #040712;
+      background: linear-gradient(90deg, #00f3ff 0%, #00ff9d 100%);
+      box-shadow: 0 0 22px rgba(0, 243, 255, 0.45);
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.15s ease;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(0, 255, 157, 0.65);
+    }
+
+    .cta-btn:active {
+      transform: translateY(1px);
+    }
+
+    .cta-btn.secondary {
+      margin-top: 8px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      box-shadow: none;
+      font-size: 13px;
+      padding: 10px 16px;
+    }
+
+    .highscore-pill {
+      display: inline-block;
+      margin-top: 10px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--neon-gold);
+      background: rgba(255, 209, 102, 0.1);
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      border-radius: 999px;
+      padding: 4px 12px;
+    }
+
+    /* Game Over Stats & Vocab Review */
+    .gameover-title {
+      font-family: var(--font-mono);
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 3px;
+      color: var(--neon-red);
+      text-shadow: 0 0 18px rgba(255, 59, 92, 0.65);
+      margin-bottom: 2px;
+    }
+
+    .gameover-title.practice {
+      color: var(--neon-green);
+      text-shadow: 0 0 18px rgba(0, 255, 157, 0.55);
+    }
+
+    .gameover-sub {
+      font-size: 11.5px;
+      letter-spacing: 1.6px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(0, 243, 255, 0.2);
+      border-radius: 10px;
+      padding: 8px 8px;
+    }
+
+    .stat-card.highlight {
+      border-color: rgba(255, 209, 102, 0.45);
+      background: rgba(255, 209, 102, 0.07);
+    }
+
+    .stat-k {
+      font-size: 10px;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 2px;
+    }
+
+    .stat-v {
+      font-family: var(--font-mono);
+      font-size: 15.5px;
+      font-weight: 800;
+      color: var(--neon-cyan);
+    }
+
+    .stat-card.highlight .stat-v {
+      color: var(--neon-gold);
+    }
+
+    .killer-word-box {
+      background: rgba(255, 59, 92, 0.11);
+      border: 1px solid rgba(255, 59, 92, 0.42);
+      border-radius: 9px;
+      padding: 7px 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #ffd5dc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .killer-word-box strong {
+      font-family: var(--font-mono);
+      color: #ffffff;
+      background: rgba(255, 59, 92, 0.35);
+      padding: 1px 7px;
+      border-radius: 5px;
+      letter-spacing: 0.5px;
+    }
+
+    .vocab-summary-box {
+      background: rgba(4, 10, 28, 0.78);
+      border: 1px solid rgba(0, 243, 255, 0.25);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      text-align: left;
+    }
+
+    .vocab-summary-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: var(--neon-green);
+      margin-bottom: 8px;
+    }
+
+    .vocab-summary-hint {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .vocab-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 148px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .vocab-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #eaf6ff;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .vocab-pill:hover {
+      background: rgba(0, 243, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    .vocab-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vocab-tr {
+      color: #ffd166;
+      font-family: var(--font-ui);
+      font-weight: 600;
+    }
+
+    .vocab-count {
+      font-size: 10px;
+      color: var(--neon-green);
+    }
+
+    .vocab-empty {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-style: italic;
+    }
+
+    .hint-footer {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+
+    /* Mobile soft keyboard helper */
+    .mobile-kbd-btn {
+      display: none;
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      z-index: 4;
+      background: rgba(6, 12, 30, 0.82);
+      border: 1px solid rgba(0, 243, 255, 0.5);
+      color: var(--neon-cyan);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .touch-input-proxy {
+      position: fixed;
+      top: -100px;
+      left: -100px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @media (pointer: coarse) {
+      .mobile-kbd-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .hud-bar {
+        height: 60px;
+        padding: 5px 6px;
+        gap: 4px;
+      }
+      .hud-label { font-size: 8.5px; }
+      .hud-value { font-size: 13px; }
+      .shield-pip { width: 9px; height: 7px; }
+      .icon-btn { height: 28px; padding: 0 6px; font-size: 10.5px; }
+      .panel { padding: 14px 12px; }
+      .letter-grid { grid-template-columns: repeat(7, 1fr); }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="arcade-cabinet" role="application" aria-label="ARKATYPE VOCAB hra">
+    <!-- Top HUD -->
+    <header class="hud-bar">
+      <div class="hud-cell">
+        <span class="hud-label">Skóre</span>
+        <div class="hud-value score-val">
+          <span id="hudScore">0</span>
+          <span class="hud-sub" id="hudCombo"></span>
+        </div>
+      </div>
+
+      <div class="hud-cell">
+        <span class="hud-label" id="hudWaveLabel">Vlna</span>
+        <div class="hud-value">
+          <span id="hudWave">1</span>
+        </div>
+        <div class="wave-progress" aria-hidden="true">
+          <div class="wave-progress-fill" id="hudWaveBar"></div>
+        </div>
+      </div>
+
+      <div class="hud-cell">
+        <span class="hud-label" id="hudTimerLabel">Čas</span>
+        <div class="hud-value timer-val">
+          <span id="hudTimer">02:00</span>
+        </div>
+      </div>
+
+      <div class="hud-cell">
+        <span class="hud-label" id="hudShieldLabel">Štít (<span id="hudShieldText">5/5</span>)</span>
+        <div class="shield-pips" id="hudShieldPips">
+          <span class="shield-pip"></span>
+          <span class="shield-pip"></span>
+          <span class="shield-pip"></span>
+          <span class="shield-pip"></span>
+          <span class="shield-pip"></span>
+        </div>
+        <span class="practice-badge" id="hudPracticeBadge">∞ TRÉNINK</span>
+      </div>
+
+      <div class="hud-cell">
+        <span class="hud-label">Přesnost</span>
+        <div class="hud-value">
+          <span id="hudAccuracy">100%</span>
+          <span class="hud-sub" id="hudCpm" style="color: var(--neon-green);"></span>
+        </div>
+      </div>
+
+      <div class="hud-controls">
+        <button id="btnFinishPractice" class="icon-btn finish-btn hidden" type="button" tabindex="-1" title="Ukončit trénink a zobrazit přehled">🏁 Shrnutí</button>
+        <button id="btnSpeech" class="icon-btn active" type="button" tabindex="-1" title="Zapnout / Vypnout anglickou výslovnost">🗣️ EN</button>
+        <button id="btnMute" class="icon-btn" type="button" tabindex="-1" title="Ztlumit / Zapnout efekty">🔊</button>
+        <button id="btnPause" class="icon-btn" type="button" tabindex="-1" title="Pozastavit hru (Esc)">⏸</button>
+      </div>
+    </header>
+
+    <!-- Game Playfield -->
+    <main class="stage-wrap">
+      <canvas id="gameCanvas" width="640" height="820"></canvas>
+      <div class="crt-scanlines"></div>
+
+      <button id="btnMobileKbd" class="mobile-kbd-btn" type="button" tabindex="-1">⌨️ Klávesnice</button>
+      <input
+        id="touchInputProxy"
+        class="touch-input-proxy"
+        type="text"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="none"
+        spellcheck="false"
+        aria-hidden="true"
+      />
+
+      <!-- Start Screen Overlay -->
+      <section id="startOverlay" class="overlay">
+        <div class="panel">
+          <div class="logo-title">ARKATYPE VOCAB</div>
+          <div class="logo-sub">Vizuální Výuková Arkáda · 79 slov (A–Z)</div>
+
+          <!-- Dual Game Mode Switcher -->
+          <div class="mode-tabs" role="tablist" aria-label="Výběr herního režimu">
+            <button id="tabChallenge" class="mode-tab selected" type="button" data-mode="CHALLENGE" role="tab" aria-selected="true">
+              <span>⏱ Výzva na čas</span>
+              <span class="mode-sub">Vlny a rostoucí obtížnost</span>
+            </button>
+            <button id="tabPractice" class="mode-tab" type="button" data-mode="PRACTICE" role="tab" aria-selected="false">
+              <span>♾️ Procvičování bez limitu</span>
+              <span class="mode-sub">Vlastní rychlost a výběr písmen</span>
+            </button>
+          </div>
+
+          <!-- Mode 1: Challenge Settings -->
+          <div id="panelChallengeConfig" class="config-card">
+            <div class="config-title">
+              <span>Pravidla výzvy na čas</span>
+              <span style="color: var(--neon-gold);">+10 s za vlnu</span>
+            </div>
+            <div class="brief-list">
+              Piš anglické názvy padajících ikon. Po sestřelení se zobrazí <strong>český překlad</strong> a uslyšíš výslovnost. První vlny začínají krátkými slovy a obtížnost plynule roste.
+            </div>
+            <div class="time-pills" role="group" aria-label="Počáteční čas výzvy">
+              <button class="time-pill" type="button" data-seconds="90">90 s</button>
+              <button class="time-pill selected" type="button" data-seconds="120">120 s</button>
+              <button class="time-pill" type="button" data-seconds="180">180 s</button>
+            </div>
+          </div>
+
+          <!-- Mode 2: Practice Settings -->
+          <div id="panelPracticeConfig" class="config-card hidden">
+            <div class="config-title">
+              <span style="color: var(--neon-green);">Nastavení procvičování</span>
+              <span style="color: var(--text-dim);">Bez ztráty štítu a času</span>
+            </div>
+
+            <div class="speed-row">
+              <label for="practiceSpeedRange" style="font-size: 12px; font-weight: 700; color: #dce9ff;">Rychlost pádu:</label>
+              <input id="practiceSpeedRange" type="range" min="0.5" max="1.6" step="0.1" value="1.0" />
+              <span id="practiceSpeedValue" class="speed-badge">1.0× Normální</span>
+            </div>
+
+            <div class="quick-filter-row">
+              <button id="btnFilterAll" class="quick-btn" type="button">Vše A–Z</button>
+              <button id="btnFilterAC" class="quick-btn" type="button">Skupina A–C</button>
+              <button id="btnFilterOnlyA" class="quick-btn" type="button">Jen písmeno A</button>
+            </div>
+
+            <div id="letterFilterGrid" class="letter-grid" aria-label="Výběr kategorií písmen"></div>
+
+            <div class="selection-summary">
+              <span id="practiceLettersSummary">Vybráno: A–Z</span>
+              <span id="practiceWordCountSummary">79 slov</span>
+            </div>
+          </div>
+
+          <button id="btnStart" class="cta-btn" type="button">Spustit výzvu (Enter)</button>
+          <div id="startHighScore" class="highscore-pill" style="display: none;">Nejvyšší skóre (Výzva): 0</div>
+        </div>
+      </section>
+
+      <!-- Pause Overlay -->
+      <section id="pauseOverlay" class="overlay hidden">
+        <div class="panel" style="max-width: 360px;">
+          <div class="logo-title" style="font-size: 30px; margin-bottom: 10px;">PAUZA</div>
+          <p style="font-size: 13px; color: var(--text-dim); margin-bottom: 18px;">
+            Výukové systémy jsou v pohotovostním režimu.
+          </p>
+          <button id="btnResume" class="cta-btn" type="button">Pokračovat (Enter / Esc)</button>
+          <button id="btnFinishFromPause" class="cta-btn secondary hidden" type="button">🏁 Ukončit a zobrazit přehled</button>
+          <button id="btnRestartFromPause" class="cta-btn secondary" type="button">Zpět na úvodní výběr</button>
+        </div>
+      </section>
+
+      <!-- Game Over / Summary Overlay -->
+      <section id="gameOverOverlay" class="overlay hidden">
+        <div class="panel">
+          <div id="goTitle" class="gameover-title">GAME OVER</div>
+          <div id="goSub" class="gameover-sub">Energetický štít byl prolomen</div>
+
+          <div class="stats-grid">
+            <div class="stat-card highlight">
+              <div class="stat-k">Konečné skóre</div>
+              <div class="stat-v" id="goScore">0</div>
+            </div>
+            <div class="stat-card highlight">
+              <div class="stat-k">Nejvyšší skóre</div>
+              <div class="stat-v" id="goHighScore">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-k">Dosažená vlna</div>
+              <div class="stat-v" id="goWave">1</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-k">Rychlost (CPM / WPM)</div>
+              <div class="stat-v" id="goSpeed">0 / 0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-k">Přesnost psaní</div>
+              <div class="stat-v" id="goAccuracy">100%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-k">Sestřeleno slov</div>
+              <div class="stat-v" id="goKills">0</div>
+            </div>
+          </div>
+
+          <div id="goKillerWordBox" class="killer-word-box hidden">
+            <span>Štít prorazil objekt:</span>
+            <strong id="goKillerWord">—</strong>
+            <span id="goKillerMeta"></span>
+          </div>
+
+          <div class="vocab-summary-box">
+            <div class="vocab-summary-head">
+              <span>Procvičená slovíčka (<span id="goVocabCount">0</span>)</span>
+              <span class="vocab-summary-hint">Klikni na slovo pro přehrání 🗣️</span>
+            </div>
+            <div id="goVocabList" class="vocab-list"></div>
+          </div>
+
+          <button id="btnRestart" class="cta-btn" type="button">Hrát znovu (Enter)</button>
+          <button id="btnBackToMenu" class="cta-btn secondary" type="button">Změnit režim / písmena</button>
+          <div class="hint-footer">Stiskni Enter pro okamžitý restart</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Letter-Partitioned Word Database (A–Z) -->
+  <script src="./words/a.js"></script>
+  <script src="./words/b.js"></script>
+  <script src="./words/c.js"></script>
+  <script src="./words/d.js"></script>
+  <script src="./words/e.js"></script>
+  <script src="./words/f.js"></script>
+  <script src="./words/g.js"></script>
+  <script src="./words/h.js"></script>
+  <script src="./words/i.js"></script>
+  <script src="./words/j.js"></script>
+  <script src="./words/k.js"></script>
+  <script src="./words/l.js"></script>
+  <script src="./words/m.js"></script>
+  <script src="./words/n.js"></script>
+  <script src="./words/o.js"></script>
+  <script src="./words/p.js"></script>
+  <script src="./words/q.js"></script>
+  <script src="./words/r.js"></script>
+  <script src="./words/s.js"></script>
+  <script src="./words/t.js"></script>
+  <script src="./words/u.js"></script>
+  <script src="./words/v.js"></script>
+  <script src="./words/w.js"></script>
+  <script src="./words/x.js"></script>
+  <script src="./words/y.js"></script>
+  <script src="./words/z.js"></script>
+
+  <script>
+    (() => {
+      'use strict';
+
+      // Polyfill roundRect for older Canvas 2D implementations
+      if (typeof CanvasRenderingContext2D !== 'undefined' && !CanvasRenderingContext2D.prototype.roundRect) {
+        /**
+         * Polyfill for CanvasRenderingContext2D.roundRect.
+         * @param {number} x
+         * @param {number} y
+         * @param {number} w
+         * @param {number} h
+         * @param {number|number[]} radii
+         * @returns {CanvasRenderingContext2D}
+         */
+        CanvasRenderingContext2D.prototype.roundRect = function (x, y, w, h, radii) {
+          const r = typeof radii === 'number' ? radii : Array.isArray(radii) ? radii[0] : 0;
+          const cr = Math.min(r, w / 2, h / 2);
+          this.moveTo(x + cr, y);
+          this.lineTo(x + w - cr, y);
+          this.quadraticCurveTo(x + w, y, x + w, y + cr);
+          this.lineTo(x + w, y + h - cr);
+          this.quadraticCurveTo(x + w, y + h, x + w - cr, y + h);
+          this.lineTo(x + cr, y + h);
+          this.quadraticCurveTo(x, y + h, x, y + h - cr);
+          this.lineTo(x, y + cr);
+          this.quadraticCurveTo(x, y, x + cr, y);
+          this.closePath();
+          return this;
+        };
+      }
+
+      // Register Service Worker only on http/https so file:// opens cleanly
+      if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator && typeof location !== 'undefined' && (location.protocol === 'http:' || location.protocol === 'https:')) {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      }
+
+      const W = 640;
+      const H = 820;
+      const SHIELD_Y = 758;
+      const PADDLE_Y = 786;
+      const MAX_SHIELD = 5;
+      const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+      /**
+       * Safe localStorage wrapper.
+       */
+      const store = {
+        /**
+         * @param {string} key
+         * @param {string} fallback
+         * @returns {string}
+         */
+        get(key, fallback) {
+          try {
+            const v = localStorage.getItem(key);
+            return v === null ? fallback : v;
+          } catch {
+            return fallback;
+          }
+        },
+        /**
+         * @param {string} key
+         * @param {string|number} val
+         */
+        set(key, val) {
+          try {
+            localStorage.setItem(key, String(val));
+          } catch {}
+        }
+      };
+
+      // =========================================================================
+      // 1. Event Bus (Publish / Subscribe Decoupling)
+      // =========================================================================
+
+      /**
+       * Canonical event constants emitted across the game architecture.
+       * @readonly
+       * @enum {string}
+       */
+      const GameEvents = Object.freeze({
+        STATE_CHANGED: 'STATE_CHANGED',
+        TARGET_LOCKED: 'TARGET_LOCKED',
+        TARGET_UNLOCKED: 'TARGET_UNLOCKED',
+        LETTER_HIT: 'LETTER_HIT',
+        TYPING_MISTAKE: 'TYPING_MISTAKE',
+        ENTITY_DESTROYED: 'ENTITY_DESTROYED',
+        SHIELD_HIT: 'SHIELD_HIT',
+        WAVE_CLEARED: 'WAVE_CLEARED',
+        GAME_OVER: 'GAME_OVER',
+        SPEECH_TOGGLED: 'SPEECH_TOGGLED',
+        AUDIO_TOGGLED: 'AUDIO_TOGGLED'
+      });
+
+      /**
+       * Synchronous publish/subscribe Event Bus decoupling simulation, audio, speech, and UI.
+       */
+      class EventBus {
+        constructor() {
+          /** @type {Map<string, Set<Function>>} */
+          this._listeners = new Map();
+        }
+
+        /**
+         * Subscribe a handler to an event name.
+         * @param {string} event
+         * @param {Function} listener
+         * @returns {Function} Unsubscribe callback.
+         */
+        on(event, listener) {
+          if (!this._listeners.has(event)) {
+            this._listeners.set(event, new Set());
+          }
+          this._listeners.get(event).add(listener);
+          return () => this.off(event, listener);
+        }
+
+        /**
+         * Unsubscribe a handler from an event name.
+         * @param {string} event
+         * @param {Function} listener
+         */
+        off(event, listener) {
+          const set = this._listeners.get(event);
+          if (set) set.delete(listener);
+        }
+
+        /**
+         * Emit an event with an optional payload to all subscribed listeners.
+         * @param {string} event
+         * @param {*} [payload]
+         */
+        emit(event, payload) {
+          const set = this._listeners.get(event);
+          if (!set) return;
+          for (const listener of set) {
+            listener(payload);
+          }
+        }
+      }
+
+      // =========================================================================
+      // 2. Finite State Machine (FSM)
+      // =========================================================================
+
+      /**
+       * Valid game states.
+       * @readonly
+       * @enum {string}
+       */
+      const GameState = Object.freeze({
+        START: 'START',
+        PLAYING: 'PLAYING',
+        PAUSED: 'PAUSED',
+        GAMEOVER: 'GAMEOVER'
+      });
+
+      /**
+       * Supported gameplay modes.
+       * @readonly
+       * @enum {string}
+       */
+      const GameMode = Object.freeze({
+        CHALLENGE: 'CHALLENGE',
+        PRACTICE: 'PRACTICE'
+      });
+
+      /**
+       * Explicit Finite State Machine controlling legal transitions and notifying via EventBus.
+       */
+      class GameStateMachine {
+        /**
+         * @param {EventBus} eventBus
+         * @param {string} [initialState=GameState.START]
+         */
+        constructor(eventBus, initialState = GameState.START) {
+          this.eventBus = eventBus;
+          this._state = initialState;
+          /** @type {Record<string, string[]>} */
+          this._transitions = {
+            [GameState.START]: [GameState.PLAYING],
+            [GameState.PLAYING]: [GameState.PAUSED, GameState.GAMEOVER, GameState.START],
+            [GameState.PAUSED]: [GameState.PLAYING, GameState.GAMEOVER, GameState.START],
+            [GameState.GAMEOVER]: [GameState.PLAYING, GameState.START]
+          };
+        }
+
+        /**
+         * @returns {string}
+         */
+        get current() {
+          return this._state;
+        }
+
+        /**
+         * @param {string} state
+         * @returns {boolean}
+         */
+        is(state) {
+          return this._state === state;
+        }
+
+        /**
+         * Check whether transitioning to nextState is legal.
+         * @param {string} nextState
+         * @returns {boolean}
+         */
+        canTransition(nextState) {
+          const allowed = this._transitions[this._state];
+          return Array.isArray(allowed) && allowed.includes(nextState);
+        }
+
+        /**
+         * Execute a state transition and broadcast STATE_CHANGED on the EventBus.
+         * @param {string} nextState
+         * @param {Object} [meta={}]
+         * @returns {boolean}
+         */
+        transition(nextState, meta = {}) {
+          if (!this.canTransition(nextState)) {
+            return false;
+          }
+          const prev = this._state;
+          this._state = nextState;
+          this.eventBus.emit(GameEvents.STATE_CHANGED, { from: prev, to: nextState, meta });
+          return true;
+        }
+      }
+
+      // =========================================================================
+      // 3. Generic Object Pool
+      // =========================================================================
+
+      /**
+       * Reusable Object Pool eliminating per-frame GC spikes for entities and VFX.
+       * @template T
+       */
+      class ObjectPool {
+        /**
+         * @param {() => T} factory
+         * @param {(item: T) => void} reset
+         * @param {number} [initialSize=0]
+         */
+        constructor(factory, reset, initialSize = 0) {
+          this._factory = factory;
+          this._reset = reset;
+          /** @type {T[]} */
+          this._free = [];
+          /** @type {T[]} */
+          this._active = [];
+          for (let i = 0; i < initialSize; i++) {
+            this._free.push(this._factory());
+          }
+        }
+
+        /**
+         * @returns {T[]}
+         */
+        get active() {
+          return this._active;
+        }
+
+        /**
+         * @returns {number}
+         */
+        get activeCount() {
+          return this._active.length;
+        }
+
+        /**
+         * Acquire a clean object from the pool or allocate if empty.
+         * @returns {T}
+         */
+        acquire() {
+          const item = this._free.length > 0 ? this._free.pop() : this._factory();
+          this._reset(item);
+          this._active.push(item);
+          return item;
+        }
+
+        /**
+         * Return an object back to the free list.
+         * @param {T} item
+         */
+        release(item) {
+          const idx = this._active.indexOf(item);
+          if (idx !== -1) {
+            this._active.splice(idx, 1);
+            this._reset(item);
+            this._free.push(item);
+          }
+        }
+
+        /**
+         * Return all active objects to the free list.
+         */
+        releaseAll() {
+          while (this._active.length > 0) {
+            const item = this._active.pop();
+            this._reset(item);
+            this._free.push(item);
+          }
+        }
+
+        /**
+         * Iterate active objects in insertion order.
+         * @param {(item: T, index: number) => void} fn
+         */
+        forEachActive(fn) {
+          for (let i = 0; i < this._active.length; i++) {
+            fn(this._active[i], i);
+          }
+        }
+
+        /**
+         * Release all active objects matching a predicate safely in reverse order.
+         * @param {(item: T) => boolean} predicate
+         */
+        releaseWhere(predicate) {
+          for (let i = this._active.length - 1; i >= 0; i--) {
+            const item = this._active[i];
+            if (predicate(item)) {
+              this._active.splice(i, 1);
+              this._reset(item);
+              this._free.push(item);
+            }
+          }
+        }
+      }
+
+      // =========================================================================
+      // 4. Data-Driven ObjectCatalog (Loaded from ./words/*.js)
+      // =========================================================================
+
+      /**
+       * @typedef {'food'|'animals'|'nature'|'objects'|'space'} VocabCategory
+       */
+
+      /**
+       * @typedef {Object} VocabObjectDef
+       * @property {string} id - Unique identifier (e.g., 'apple').
+       * @property {string} word - Lowercase English word without spaces.
+       * @property {string} translation - Czech translation displayed upon explosion.
+       * @property {string} letter - Uppercase initial letter ('A'–'Z').
+       * @property {VocabCategory} category - Semantic category.
+       * @property {1|2|3} difficulty - Difficulty tier (1 = short, 2 = medium, 3 = long).
+       * @property {string} primaryColor - Primary accent hex color for glow & particles.
+       * @property {string} secondaryColor - Secondary accent hex color for highlights & particles.
+       * @property {(ctx: CanvasRenderingContext2D, size: number) => void} draw - Self-contained vector Canvas 2D renderer centered at (0, 0).
+       */
+
+      /**
+       * Data-driven Object Catalog managing tier-based wave selection, per-letter filtering,
+       * and unique-initial targeting guarantees.
+       * Adheres strictly to the Open/Closed Principle: operates purely on the injected database.
+       */
+      class ObjectCatalog {
+        /**
+         * @param {VocabObjectDef[]} database
+         */
+        constructor(database) {
+          /** @type {VocabObjectDef[]} */
+          this.items = database.slice();
+          /** @type {Map<string, VocabObjectDef>} */
+          this._byId = new Map();
+          /** @type {Record<number, VocabObjectDef[]>} */
+          this._byTier = { 1: [], 2: [], 3: [] };
+          /** @type {Map<string, VocabObjectDef[]>} */
+          this._byLetter = new Map();
+
+          for (const item of this.items) {
+            const letter = (item.letter || item.word[0]).toUpperCase();
+            this._byId.set(item.id, item);
+            if (!this._byTier[item.difficulty]) {
+              this._byTier[item.difficulty] = [];
+            }
+            this._byTier[item.difficulty].push(item);
+            if (!this._byLetter.has(letter)) {
+              this._byLetter.set(letter, []);
+            }
+            this._byLetter.get(letter).push(item);
+          }
+        }
+
+        /**
+         * Retrieve a catalog item by unique ID.
+         * @param {string} id
+         * @returns {VocabObjectDef|undefined}
+         */
+        getById(id) {
+          return this._byId.get(id);
+        }
+
+        /**
+         * Return all catalog items belonging to the specified uppercase letters.
+         * @param {Set<string>|string[]} allowedLetters
+         * @returns {VocabObjectDef[]}
+         */
+        getItemsForLetters(allowedLetters) {
+          const set = allowedLetters instanceof Set ? allowedLetters : new Set(allowedLetters);
+          if (set.size === 0) return this.items.slice();
+          const result = [];
+          for (const letter of set) {
+            const group = this._byLetter.get(letter.toUpperCase());
+            if (group) result.push(...group);
+          }
+          return result;
+        }
+
+        /**
+         * Compute probability weights for tiers 1, 2, and 3 given the current wave number.
+         * Wave 1 is 100% Tier 1; Wave 2 mixes Tier 1 & 2; Wave 3+ blends all three tiers.
+         * @param {number} wave
+         * @returns {{ 1: number, 2: number, 3: number }}
+         */
+        getTierWeightsForWave(wave) {
+          if (wave <= 1) return { 1: 1.0, 2: 0.0, 3: 0.0 };
+          if (wave === 2) return { 1: 0.70, 2: 0.30, 3: 0.0 };
+          if (wave === 3) return { 1: 0.45, 2: 0.40, 3: 0.15 };
+
+          const t1 = Math.max(0.10, 0.45 - (wave - 3) * 0.09);
+          const t3 = Math.min(0.55, 0.15 + (wave - 3) * 0.10);
+          const t2 = Math.max(0.20, 1.0 - t1 - t3);
+          const total = t1 + t2 + t3;
+          return { 1: t1 / total, 2: t2 / total, 3: t3 / total };
+        }
+
+        /**
+         * Pick an appropriate item from the catalog based on mode, wave difficulty,
+         * letter filters, and active screen state.
+         * @param {Object} options
+         * @param {string} [options.mode=GameMode.CHALLENGE]
+         * @param {number} [options.wave=1]
+         * @param {Set<string>|string[]} [options.allowedLetters]
+         * @param {Set<string>} [options.activeInitials]
+         * @param {Set<string>} [options.activeIds]
+         * @param {string[]} [options.recentInitials=[]]
+         * @param {string[]} [options.recentIds=[]]
+         * @returns {VocabObjectDef|null}
+         */
+        pickObject({
+          mode = GameMode.CHALLENGE,
+          wave = 1,
+          allowedLetters = LETTERS,
+          activeInitials = new Set(),
+          activeIds = new Set(),
+          recentInitials = [],
+          recentIds = []
+        } = {}) {
+          const allowedSet = new Set(
+            Array.from(allowedLetters).map((l) => String(l).toUpperCase())
+          );
+          const scopedItems = this.getItemsForLetters(allowedSet).filter(
+            (item) => !activeIds.has(item.id)
+          );
+          if (scopedItems.length === 0) return null;
+
+          if (mode === GameMode.PRACTICE) {
+            // Prefer distinct starting letters first, then allow same-initial distinct words (e.g. only 'A' selected)
+            const uniqueInitialPool = scopedItems.filter((item) => !activeInitials.has(item.word[0]));
+            const candidatePool = uniqueInitialPool.length > 0 ? uniqueInitialPool : scopedItems;
+            return this._chooseFresh(candidatePool, recentInitials, recentIds);
+          }
+
+          // Challenge mode: progressive wave tiers with strict unique initial priority
+          const weights = this.getTierWeightsForWave(wave);
+          const roll = Math.random();
+          let primaryTier = 1;
+          if (roll < weights[1]) {
+            primaryTier = 1;
+          } else if (roll < weights[1] + weights[2]) {
+            primaryTier = 2;
+          } else {
+            primaryTier = 3;
+          }
+
+          const tierOrder = [primaryTier];
+          const availableTiers = [1, 2, 3]
+            .filter((t) => t !== primaryTier && (wave > 1 || t === 1))
+            .sort((a, b) => weights[b] - weights[a]);
+          for (const t of availableTiers) tierOrder.push(t);
+          for (const t of [1, 2, 3]) {
+            if (!tierOrder.includes(t)) tierOrder.push(t);
+          }
+
+          for (const tier of tierOrder) {
+            const valid = scopedItems.filter(
+              (item) => item.difficulty === tier && !activeInitials.has(item.word[0])
+            );
+            if (valid.length > 0) {
+              return this._chooseFresh(valid, recentInitials, recentIds);
+            }
+          }
+
+          return null;
+        }
+
+        /**
+         * Prefer items whose IDs and initials were not just spawned.
+         * @private
+         * @param {VocabObjectDef[]} pool
+         * @param {string[]} recentInitials
+         * @param {string[]} recentIds
+         * @returns {VocabObjectDef}
+         */
+        _chooseFresh(pool, recentInitials, recentIds) {
+          const freshAll = pool.filter(
+            (item) => !recentIds.includes(item.id) && !recentInitials.includes(item.word[0])
+          );
+          const freshWord = pool.filter((item) => !recentIds.includes(item.id));
+          const target = freshAll.length > 0 ? freshAll : freshWord.length > 0 ? freshWord : pool;
+          return target[Math.floor(Math.random() * target.length)];
+        }
+      }
+
+      // =========================================================================
+      // 5. SpeechManager (Web Speech API via Event Bus)
+      // =========================================================================
+
+      /**
+       * Optional educational pronunciation module using native Web Speech API (`window.speechSynthesis`).
+       * Listens to `GameEvents.ENTITY_DESTROYED` on the EventBus.
+       */
+      class SpeechManager {
+        /**
+         * @param {EventBus} eventBus
+         */
+        constructor(eventBus) {
+          this.eventBus = eventBus;
+          this.supported =
+            typeof window !== 'undefined' &&
+            'speechSynthesis' in window &&
+            typeof SpeechSynthesisUtterance !== 'undefined';
+          this.enabled = store.get('arkatype_speech_enabled', '1') === '1';
+          this._englishVoice = null;
+
+          if (this.supported) {
+            this._selectVoice();
+            if (typeof window.speechSynthesis.addEventListener === 'function') {
+              window.speechSynthesis.addEventListener('voiceschanged', () => this._selectVoice());
+            } else {
+              window.speechSynthesis.onvoiceschanged = () => this._selectVoice();
+            }
+          }
+
+          this.eventBus.on(GameEvents.ENTITY_DESTROYED, (payload) => {
+            if (this.enabled && payload && payload.byPlayer && payload.word) {
+              this.speak(payload.word);
+            }
+          });
+        }
+
+        /**
+         * Pick a clear en-US or en-GB voice when available.
+         * @private
+         */
+        _selectVoice() {
+          if (!this.supported) return;
+          try {
+            const voices = window.speechSynthesis.getVoices();
+            this._englishVoice =
+              voices.find((v) => /^en[-_]US/i.test(v.lang)) ||
+              voices.find((v) => /^en/i.test(v.lang)) ||
+              null;
+          } catch {
+            this._englishVoice = null;
+          }
+        }
+
+        /**
+         * Pronounce an English word aloud.
+         * @param {string} word
+         * @param {boolean} [force=false] - Pronounce even when auto-speech is toggled off.
+         */
+        speak(word, force = false) {
+          if (!this.supported || (!this.enabled && !force) || !word) return;
+          try {
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(word);
+            utter.lang = 'en-US';
+            utter.rate = 0.95;
+            utter.pitch = 1.0;
+            if (this._englishVoice) {
+              utter.voice = this._englishVoice;
+            }
+            window.speechSynthesis.speak(utter);
+          } catch {}
+        }
+
+        /**
+         * Toggle automatic pronunciation on/off and emit SPEECH_TOGGLED.
+         * @returns {boolean} New enabled state.
+         */
+        toggle() {
+          this.enabled = !this.enabled;
+          store.set('arkatype_speech_enabled', this.enabled ? '1' : '0');
+          if (!this.enabled && this.supported) {
+            try {
+              window.speechSynthesis.cancel();
+            } catch {}
+          }
+          this.eventBus.emit(GameEvents.SPEECH_TOGGLED, { enabled: this.enabled });
+          return this.enabled;
+        }
+      }
+
+      // =========================================================================
+      // 6. Procedural Retro Sound Engine (Web Audio API via Event Bus)
+      // =========================================================================
+
+      /**
+       * Synthesizes retro arcade sound effects via Web Audio API in response to EventBus events.
+       */
+      class SoundEngine {
+        /**
+         * @param {EventBus} eventBus
+         */
+        constructor(eventBus) {
+          this.eventBus = eventBus;
+          this.ctx = null;
+          this.master = null;
+          this.noiseBuffer = null;
+          this.muted = store.get('arkatype_muted', '0') === '1';
+
+          this._bindBusEvents();
+        }
+
+        /**
+         * Subscribe sound effects to gameplay events.
+         * @private
+         */
+        _bindBusEvents() {
+          this.eventBus.on(GameEvents.TARGET_LOCKED, () => this.lockOn());
+          this.eventBus.on(GameEvents.LETTER_HIT, (p) => this.laser(p.step, p.total));
+          this.eventBus.on(GameEvents.TYPING_MISTAKE, () => this.error());
+          this.eventBus.on(GameEvents.ENTITY_DESTROYED, (p) => {
+            if (p && p.byPlayer && !p.silent) this.explosion(false);
+          });
+          this.eventBus.on(GameEvents.SHIELD_HIT, () => this.shieldHit());
+          this.eventBus.on(GameEvents.WAVE_CLEARED, () => this.waveClear());
+          this.eventBus.on(GameEvents.GAME_OVER, (p) => {
+            if (!p || p.reason !== 'PRACTICE_SUMMARY') this.gameOver();
+            else this.waveClear();
+          });
+        }
+
+        /**
+         * Lazily initialize or resume the AudioContext on user gesture.
+         * @returns {boolean}
+         */
+        ensureContext() {
+          if (typeof window === 'undefined') return false;
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return false;
+            this.ctx = new AudioCtx();
+            this.master = this.ctx.createGain();
+            this.master.gain.value = this.muted ? 0 : 0.36;
+            this.master.connect(this.ctx.destination);
+            this.noiseBuffer = this.createNoiseBuffer();
+          }
+          if (this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+          return true;
+        }
+
+        /**
+         * @returns {AudioBuffer}
+         */
+        createNoiseBuffer() {
+          const length = this.ctx.sampleRate * 0.4;
+          const buffer = this.ctx.createBuffer(1, length, this.ctx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < length; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+          return buffer;
+        }
+
+        /**
+         * Toggle mute state and notify listeners.
+         * @returns {boolean}
+         */
+        toggleMute() {
+          this.muted = !this.muted;
+          store.set('arkatype_muted', this.muted ? '1' : '0');
+          if (this.master && this.ctx) {
+            this.master.gain.setValueAtTime(this.muted ? 0 : 0.36, this.ctx.currentTime);
+          }
+          this.eventBus.emit(GameEvents.AUDIO_TOGGLED, { muted: this.muted });
+          return this.muted;
+        }
+
+        /**
+         * Play a short synthesized oscillator sweep.
+         * @param {OscillatorType} type
+         * @param {number} freqStart
+         * @param {number} freqEnd
+         * @param {number} duration
+         * @param {number} [gainPeak=0.22]
+         * @param {number} [delay=0]
+         */
+        tone(type, freqStart, freqEnd, duration, gainPeak = 0.22, delay = 0) {
+          if (this.muted || !this.ensureContext()) return;
+          const t = this.ctx.currentTime + delay;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freqStart, t);
+          if (freqEnd !== freqStart) {
+            osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), t + duration);
+          }
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(gainPeak, t + 0.008);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+          osc.connect(gain);
+          gain.connect(this.master);
+          osc.start(t);
+          osc.stop(t + duration + 0.01);
+        }
+
+        lockOn() {
+          this.tone('triangle', 640, 1080, 0.06, 0.18);
+        }
+
+        /**
+         * @param {number} step
+         * @param {number} total
+         */
+        laser(step, total) {
+          const progress = total > 1 ? step / total : 1;
+          const startFreq = 760 + progress * 440;
+          this.tone('sawtooth', startFreq, 240, 0.065, 0.12);
+          this.tone('sine', startFreq * 1.35, 380, 0.05, 0.09);
+        }
+
+        /**
+         * @param {boolean} [big=false]
+         */
+        explosion(big = false) {
+          if (this.muted || !this.ensureContext()) return;
+          const t = this.ctx.currentTime;
+          const dur = big ? 0.34 : 0.18;
+
+          const src = this.ctx.createBufferSource();
+          src.buffer = this.noiseBuffer;
+          const filter = this.ctx.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.frequency.setValueAtTime(big ? 1600 : 1200, t);
+          filter.frequency.exponentialRampToValueAtTime(120, t + dur);
+
+          const gain = this.ctx.createGain();
+          gain.gain.setValueAtTime(big ? 0.32 : 0.16, t);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+          src.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.master);
+          src.start(t);
+          src.stop(t + dur + 0.02);
+
+          this.tone('triangle', big ? 160 : 140, 42, dur * 0.8, big ? 0.28 : 0.14);
+        }
+
+        error() {
+          this.tone('sawtooth', 155, 115, 0.1, 0.18);
+          this.tone('square', 168, 122, 0.09, 0.1);
+        }
+
+        shieldHit() {
+          this.explosion(true);
+          this.tone('sawtooth', 220, 58, 0.28, 0.24);
+        }
+
+        waveClear() {
+          const notes = [440, 554.37, 659.25, 880];
+          notes.forEach((n, i) => this.tone('triangle', n, n, 0.14, 0.18, i * 0.08));
+        }
+
+        gameOver() {
+          const notes = [392, 349.23, 293.66, 220];
+          notes.forEach((n, i) => this.tone('sawtooth', n, n * 0.96, 0.24, 0.18, i * 0.14));
+        }
+      }
+
+      // =========================================================================
+      // 7. Main Game Controller & Renderer (VocabArcadeGame)
+      // =========================================================================
+
+      /**
+       * Visual English Vocabulary Arcade supporting both Timed Wave Challenge and
+       * Unlimited Letter-Filtered Practice modes.
+       */
+      class VocabArcadeGame {
+        /**
+         * @param {ObjectCatalog} catalog
+         */
+        constructor(catalog) {
+          this.catalog = catalog;
+          this.eventBus = new EventBus();
+          this.fsm = new GameStateMachine(this.eventBus, GameState.START);
+          this.sound = new SoundEngine(this.eventBus);
+          this.speech = new SpeechManager(this.eventBus);
+
+          this.canvas = document.getElementById('gameCanvas');
+          this.ctx = this.canvas.getContext('2d');
+
+          // Mode & user configuration state
+          this.mode = GameMode.CHALLENGE;
+          this.challengeInitialTime = 120;
+          this.practiceSpeedMult = 1.0;
+          /** @type {Set<string>} */
+          this.selectedLetters = new Set(LETTERS);
+          this.timeLeft = this.challengeInitialTime;
+          this.gameOverReason = 'SHIELD_BROKEN';
+
+          // HUD & Overlay references
+          this.elScore = document.getElementById('hudScore');
+          this.elCombo = document.getElementById('hudCombo');
+          this.elWaveLabel = document.getElementById('hudWaveLabel');
+          this.elWave = document.getElementById('hudWave');
+          this.elWaveBar = document.getElementById('hudWaveBar');
+          this.elTimerLabel = document.getElementById('hudTimerLabel');
+          this.elTimer = document.getElementById('hudTimer');
+          this.elShieldLabel = document.getElementById('hudShieldLabel');
+          this.elShieldText = document.getElementById('hudShieldText');
+          this.elShieldPipsWrap = document.getElementById('hudShieldPips');
+          this.elShieldPips = Array.from(document.querySelectorAll('#hudShieldPips .shield-pip'));
+          this.elPracticeBadge = document.getElementById('hudPracticeBadge');
+          this.elAccuracy = document.getElementById('hudAccuracy');
+          this.elCpm = document.getElementById('hudCpm');
+
+          this.elBtnFinishPractice = document.getElementById('btnFinishPractice');
+          this.elBtnFinishFromPause = document.getElementById('btnFinishFromPause');
+          this.elBtnSpeech = document.getElementById('btnSpeech');
+          this.elBtnMute = document.getElementById('btnMute');
+          this.elBtnPause = document.getElementById('btnPause');
+          this.elStartOverlay = document.getElementById('startOverlay');
+          this.elPauseOverlay = document.getElementById('pauseOverlay');
+          this.elGameOverOverlay = document.getElementById('gameOverOverlay');
+          this.elStartHighScore = document.getElementById('startHighScore');
+
+          // Mode configuration UI references
+          this.elTabChallenge = document.getElementById('tabChallenge');
+          this.elTabPractice = document.getElementById('tabPractice');
+          this.elPanelChallengeConfig = document.getElementById('panelChallengeConfig');
+          this.elPanelPracticeConfig = document.getElementById('panelPracticeConfig');
+          this.elBtnStart = document.getElementById('btnStart');
+          this.elPracticeSpeedRange = document.getElementById('practiceSpeedRange');
+          this.elPracticeSpeedValue = document.getElementById('practiceSpeedValue');
+          this.elLetterFilterGrid = document.getElementById('letterFilterGrid');
+          this.elPracticeLettersSummary = document.getElementById('practiceLettersSummary');
+          this.elPracticeWordCountSummary = document.getElementById('practiceWordCountSummary');
+
+          // Game Over UI references
+          this.elGoTitle = document.getElementById('goTitle');
+          this.elGoSub = document.getElementById('goSub');
+          this.elGoScore = document.getElementById('goScore');
+          this.elGoHighScore = document.getElementById('goHighScore');
+          this.elGoWave = document.getElementById('goWave');
+          this.elGoSpeed = document.getElementById('goSpeed');
+          this.elGoAccuracy = document.getElementById('goAccuracy');
+          this.elGoKills = document.getElementById('goKills');
+          this.elGoKillerWordBox = document.getElementById('goKillerWordBox');
+          this.elGoKillerWord = document.getElementById('goKillerWord');
+          this.elGoKillerMeta = document.getElementById('goKillerMeta');
+          this.elGoVocabCount = document.getElementById('goVocabCount');
+          this.elGoVocabList = document.getElementById('goVocabList');
+
+          this.elTouchProxy = document.getElementById('touchInputProxy');
+          this.elBtnMobileKbd = document.getElementById('btnMobileKbd');
+
+          // Object Pools for zero-GC runtime performance
+          this.enemyPool = new ObjectPool(
+            () => ({
+              id: 0,
+              catalogItem: null,
+              word: '',
+              typed: 0,
+              x: 0,
+              y: 0,
+              vy: 0,
+              radius: 28,
+              iconSize: 24,
+              swayPhase: 0,
+              swayFreq: 2.2,
+              spawnFlash: 0,
+              hitFlash: 0
+            }),
+            (e) => {
+              e.id = 0;
+              e.catalogItem = null;
+              e.word = '';
+              e.typed = 0;
+              e.x = 0;
+              e.y = 0;
+              e.vy = 0;
+              e.spawnFlash = 0;
+              e.hitFlash = 0;
+            },
+            14
+          );
+
+          this.laserPool = new ObjectPool(
+            () => ({ x1: 0, y1: 0, x2: 0, y2: 0, color: '#00ff9d', life: 0, maxLife: 0.14 }),
+            (l) => {
+              l.life = 0;
+            },
+            16
+          );
+
+          this.particlePool = new ObjectPool(
+            () => ({ x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 0.5, size: 3, color: '#ffffff' }),
+            (p) => {
+              p.life = 0;
+            },
+            160
+          );
+
+          this.shockwavePool = new ObjectPool(
+            () => ({ x: 0, y: 0, r: 6, maxR: 54, color: '#00f3ff', life: 0, maxLife: 0.34 }),
+            (sw) => {
+              sw.life = 0;
+            },
+            16
+          );
+
+          this.floatingTextPool = new ObjectPool(
+            () => ({
+              x: 0,
+              y: 0,
+              text: '',
+              subText: '',
+              color: '#00ff9d',
+              borderColor: '#00ff9d',
+              bgPill: false,
+              life: 0,
+              maxLife: 0.85,
+              vy: -36,
+              scale: 1
+            }),
+            (ft) => {
+              ft.life = 0;
+              ft.scale = 1;
+              ft.subText = '';
+              ft.bgPill = false;
+              ft.borderColor = '#00ff9d';
+            },
+            24
+          );
+
+          this.highScore = parseInt(store.get('arkatype_vocab_highscore', '0'), 10) || 0;
+          this.stars = this.createStars();
+
+          this._buildLetterFilterGrid();
+          this._bindStateOverlays();
+          this.resetGameData();
+          this.syncModeConfigUI();
+          this.syncSpeechButton();
+          this.syncMuteButton();
+          this.refreshStartHighScore();
+          this.bindEvents();
+
+          this.lastTime = performance.now();
+          requestAnimationFrame((t) => this.loop(t));
+        }
+
+        /**
+         * Build the 26 A–Z letter category filter buttons on the start panel.
+         * @private
+         */
+        _buildLetterFilterGrid() {
+          this.elLetterFilterGrid.innerHTML = '';
+          this._letterButtons = new Map();
+
+          for (const letter of LETTERS) {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'letter-btn selected';
+            btn.textContent = letter;
+            btn.dataset.letter = letter;
+            btn.addEventListener('click', () => this.toggleLetterCategory(letter));
+            this.elLetterFilterGrid.appendChild(btn);
+            this._letterButtons.set(letter, btn);
+          }
+        }
+
+        /**
+         * Subscribe UI overlay transitions to FSM state changes via EventBus.
+         * @private
+         */
+        _bindStateOverlays() {
+          this.eventBus.on(GameEvents.STATE_CHANGED, ({ to }) => {
+            this.elStartOverlay.classList.toggle('hidden', to !== GameState.START);
+            this.elPauseOverlay.classList.toggle('hidden', to !== GameState.PAUSED);
+            this.elGameOverOverlay.classList.toggle('hidden', to !== GameState.GAMEOVER);
+            this.elBtnPause.textContent = to === GameState.PAUSED ? '▶' : '⏸';
+          });
+        }
+
+        /**
+         * Switch active game mode (`CHALLENGE` or `PRACTICE`) on start screen.
+         * @param {string} mode
+         */
+        setMode(mode) {
+          this.mode = mode === GameMode.PRACTICE ? GameMode.PRACTICE : GameMode.CHALLENGE;
+          this.syncModeConfigUI();
+        }
+
+        /**
+         * Toggle a letter in the Practice Mode category filter while preserving at least 1 letter.
+         * @param {string} letter
+         */
+        toggleLetterCategory(letter) {
+          const upper = letter.toUpperCase();
+          if (this.selectedLetters.has(upper)) {
+            if (this.selectedLetters.size <= 1) return;
+            this.selectedLetters.delete(upper);
+          } else {
+            this.selectedLetters.add(upper);
+          }
+          this.syncModeConfigUI();
+        }
+
+        /**
+         * Replace the active Practice Mode letter filter with a preset array of letters.
+         * @param {string[]} letters
+         */
+        setLetterFilter(letters) {
+          const valid = letters.map((l) => l.toUpperCase()).filter((l) => LETTERS.includes(l));
+          if (valid.length === 0) return;
+          this.selectedLetters = new Set(valid);
+          this.syncModeConfigUI();
+        }
+
+        /**
+         * Synchronize Start Screen mode tabs, speed badge, and letter filter summary.
+         */
+        syncModeConfigUI() {
+          const isPractice = this.mode === GameMode.PRACTICE;
+          this.elTabChallenge.classList.toggle('selected', !isPractice);
+          this.elTabChallenge.setAttribute('aria-selected', String(!isPractice));
+          this.elTabPractice.classList.toggle('selected', isPractice);
+          this.elTabPractice.setAttribute('aria-selected', String(isPractice));
+
+          this.elPanelChallengeConfig.classList.toggle('hidden', isPractice);
+          this.elPanelPracticeConfig.classList.toggle('hidden', !isPractice);
+          this.elBtnStart.textContent = isPractice
+            ? 'Spustit procvičování (Enter)'
+            : 'Spustit výzvu (Enter)';
+
+          // Update speed label
+          const pct = Math.round(this.practiceSpeedMult * 100);
+          const speedDesc =
+            this.practiceSpeedMult <= 0.7
+              ? 'Pomalá'
+              : this.practiceSpeedMult >= 1.3
+                ? 'Rychlá'
+                : 'Normální';
+          this.elPracticeSpeedValue.textContent = `${this.practiceSpeedMult.toFixed(1)}× (${pct}% ${speedDesc})`;
+
+          // Update A–Z letter buttons and word count preview
+          for (const [letter, btn] of this._letterButtons.entries()) {
+            btn.classList.toggle('selected', this.selectedLetters.has(letter));
+          }
+          const ordered = LETTERS.filter((l) => this.selectedLetters.has(l));
+          const summaryText =
+            ordered.length === LETTERS.length
+              ? 'Vybráno: Vše (A–Z)'
+              : ordered.length <= 6
+                ? `Vybráno: ${ordered.join(', ')}`
+                : `Vybráno: ${ordered.slice(0, 5).join(', ')}… (${ordered.length})`;
+          this.elPracticeLettersSummary.textContent = summaryText;
+          const wordCount = this.catalog.getItemsForLetters(this.selectedLetters).length;
+          this.elPracticeWordCountSummary.textContent = `${wordCount} slov`;
+        }
+
+        /**
+         * Create parallax background stars.
+         * @returns {Array<Object>}
+         */
+        createStars() {
+          const stars = [];
+          const layers = [
+            { count: 50, speed: 10, size: 1.1, alpha: 0.35 },
+            { count: 32, speed: 22, size: 1.6, alpha: 0.6 },
+            { count: 16, speed: 38, size: 2.1, alpha: 0.85 }
+          ];
+          for (const layer of layers) {
+            for (let i = 0; i < layer.count; i++) {
+              stars.push({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                speed: layer.speed * (0.85 + Math.random() * 0.3),
+                size: layer.size,
+                alpha: layer.alpha,
+                twinkle: Math.random() * Math.PI * 2,
+                tint: Math.random() < 0.25 ? '#7fefff' : Math.random() < 0.15 ? '#ffb6dc' : '#ffffff'
+              });
+            }
+          }
+          return stars;
+        }
+
+        /**
+         * Reset all gameplay metrics and release pooled objects for a fresh run.
+         */
+        resetGameData() {
+          this.score = 0;
+          this.wave = 1;
+          this.shield = MAX_SHIELD;
+          this.combo = 0;
+          this.maxCombo = 0;
+          this.correctHits = 0;
+          this.mistakes = 0;
+          this.kills = 0;
+          this.activePlaySeconds = 0;
+          this.timeLeft = this.challengeInitialTime;
+          this.gameOverReason = 'SHIELD_BROKEN';
+
+          this.enemyPool.releaseAll();
+          this.laserPool.releaseAll();
+          this.particlePool.releaseAll();
+          this.shockwavePool.releaseAll();
+          this.floatingTextPool.releaseAll();
+
+          this.nextEnemyId = 1;
+          this.lockedId = null;
+          this.recentInitials = [];
+          this.recentWordIds = [];
+
+          /** @type {Map<string, { item: VocabObjectDef, count: number }>} */
+          this.learnedWordsMap = new Map();
+          /** @type {VocabObjectDef|null} */
+          this.lastBreachItem = null;
+
+          this.waveSpawned = 0;
+          this.waveDestroyed = 0;
+          this.waveTotal = this.getWaveConfig(1).count;
+          this.spawnTimer = 0.45;
+          this.waveBannerTimer = 1.65;
+          this.waveClearTimer = 0;
+
+          this.shakeTimer = 0;
+          this.shakeStrength = 0;
+          this.damageFlash = 0;
+          this.mistakeFlash = 0;
+          this.gameOverTimestamp = 0;
+
+          this.paddle = {
+            x: W / 2,
+            y: PADDLE_Y,
+            width: 112,
+            height: 18,
+            angle: -Math.PI / 2,
+            recoil: 0,
+            muzzleFlash: 0
+          };
+
+          this.updateHud();
+        }
+
+        /**
+         * Compute wave pacing parameters for Challenge or Practice mode.
+         * @param {number} wave
+         * @returns {{ count: number, baseSpeed: number, spawnInterval: number, maxActive: number }}
+         */
+        getWaveConfig(wave) {
+          if (this.mode === GameMode.PRACTICE) {
+            const avail = Math.max(1, this.catalog.getItemsForLetters(this.selectedLetters).length);
+            const speed = 44 * this.practiceSpeedMult;
+            const spawnInterval = Math.max(0.85, 1.85 / Math.max(0.65, this.practiceSpeedMult));
+            return {
+              count: Infinity,
+              baseSpeed: speed,
+              spawnInterval,
+              maxActive: Math.min(5, avail)
+            };
+          }
+
+          const count = 8 + wave * 3;
+          const baseSpeed = Math.min(96, 36 + (wave - 1) * 6.5);
+          const spawnInterval = Math.max(0.95, 2.1 - (wave - 1) * 0.12);
+          const maxActive = Math.min(8, 3 + Math.floor((wave + 1) / 2));
+          return { count, baseSpeed, spawnInterval, maxActive };
+        }
+
+        refreshStartHighScore() {
+          if (this.highScore > 0) {
+            this.elStartHighScore.style.display = 'inline-block';
+            this.elStartHighScore.textContent = `Nejvyšší skóre (Výzva): ${this.highScore.toLocaleString('cs-CZ')}`;
+          }
+        }
+
+        syncSpeechButton() {
+          if (!this.speech.supported) {
+            this.elBtnSpeech.textContent = '🗣️ N/A';
+            this.elBtnSpeech.classList.remove('active');
+            this.elBtnSpeech.classList.add('muted');
+            this.elBtnSpeech.title = 'Web Speech API není v tomto prohlížeči podporováno';
+            return;
+          }
+          if (this.speech.enabled) {
+            this.elBtnSpeech.textContent = '🗣️ EN';
+            this.elBtnSpeech.classList.add('active');
+            this.elBtnSpeech.classList.remove('muted');
+            this.elBtnSpeech.title = 'Vypnout anglickou výslovnost';
+          } else {
+            this.elBtnSpeech.textContent = '🗣️ OFF';
+            this.elBtnSpeech.classList.remove('active');
+            this.elBtnSpeech.classList.add('muted');
+            this.elBtnSpeech.title = 'Zapnout anglickou výslovnost';
+          }
+        }
+
+        syncMuteButton() {
+          if (this.sound.muted) {
+            this.elBtnMute.textContent = '🔇';
+            this.elBtnMute.classList.add('muted');
+            this.elBtnMute.title = 'Zapnout efekty';
+          } else {
+            this.elBtnMute.textContent = '🔊';
+            this.elBtnMute.classList.remove('muted');
+            this.elBtnMute.title = 'Ztlumit efekty';
+          }
+        }
+
+        bindEvents() {
+          this.elTabChallenge.addEventListener('click', () => this.setMode(GameMode.CHALLENGE));
+          this.elTabPractice.addEventListener('click', () => this.setMode(GameMode.PRACTICE));
+
+          document.querySelectorAll('.time-pill').forEach((pill) => {
+            pill.addEventListener('click', () => {
+              document.querySelectorAll('.time-pill').forEach((p) => p.classList.remove('selected'));
+              pill.classList.add('selected');
+              this.challengeInitialTime = parseInt(pill.dataset.seconds, 10) || 120;
+              this.timeLeft = this.challengeInitialTime;
+              this.updateHud();
+            });
+          });
+
+          this.elPracticeSpeedRange.addEventListener('input', (e) => {
+            this.practiceSpeedMult = parseFloat(e.target.value) || 1.0;
+            this.syncModeConfigUI();
+          });
+
+          document.getElementById('btnFilterAll').addEventListener('click', () => {
+            this.setLetterFilter(LETTERS);
+          });
+          document.getElementById('btnFilterAC').addEventListener('click', () => {
+            this.setLetterFilter(['A', 'B', 'C']);
+          });
+          document.getElementById('btnFilterOnlyA').addEventListener('click', () => {
+            this.setLetterFilter(['A']);
+          });
+
+          document.getElementById('btnStart').addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.startGame();
+          });
+
+          document.getElementById('btnRestart').addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.startGame();
+          });
+
+          document.getElementById('btnBackToMenu').addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.returnToMenu();
+          });
+
+          document.getElementById('btnResume').addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.togglePause();
+          });
+
+          document.getElementById('btnRestartFromPause').addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.returnToMenu();
+          });
+
+          this.elBtnFinishPractice.addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.finishPracticeSession();
+          });
+
+          this.elBtnFinishFromPause.addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.finishPracticeSession();
+          });
+
+          this.elBtnSpeech.addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.speech.toggle();
+            this.syncSpeechButton();
+          });
+
+          this.elBtnMute.addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.sound.ensureContext();
+            this.sound.toggleMute();
+            this.syncMuteButton();
+          });
+
+          this.elBtnPause.addEventListener('click', (e) => {
+            e.currentTarget.blur();
+            this.togglePause();
+          });
+
+          this.elBtnMobileKbd.addEventListener('click', () => {
+            this.elTouchProxy.focus();
+          });
+
+          this.elTouchProxy.addEventListener('input', () => {
+            const val = this.elTouchProxy.value;
+            this.elTouchProxy.value = '';
+            if (!this.fsm.is(GameState.PLAYING) || !val) return;
+            for (const ch of val.toLowerCase()) {
+              if (/^[a-z]$/.test(ch)) {
+                this.handleLetterInput(ch);
+              }
+            }
+          });
+
+          window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.altKey || e.metaKey || e.isComposing) return;
+
+            if (e.key === 'Enter') {
+              if (this.fsm.is(GameState.START)) {
+                e.preventDefault();
+                this.startGame();
+                return;
+              }
+              if (this.fsm.is(GameState.PAUSED)) {
+                e.preventDefault();
+                this.togglePause();
+                return;
+              }
+              if (this.fsm.is(GameState.GAMEOVER)) {
+                if (performance.now() - this.gameOverTimestamp > 420) {
+                  e.preventDefault();
+                  this.startGame();
+                }
+                return;
+              }
+            }
+
+            if (e.key === 'Escape') {
+              if (this.fsm.is(GameState.PLAYING)) {
+                e.preventDefault();
+                if (this.lockedId !== null) {
+                  this.unlockTarget();
+                } else {
+                  this.togglePause();
+                }
+                return;
+              }
+              if (this.fsm.is(GameState.PAUSED)) {
+                e.preventDefault();
+                this.togglePause();
+                return;
+              }
+            }
+
+            if (e.key === 'Backspace' && this.fsm.is(GameState.PLAYING)) {
+              e.preventDefault();
+              if (this.lockedId !== null) {
+                this.unlockTarget();
+              }
+              return;
+            }
+
+            if (!this.fsm.is(GameState.PLAYING) || e.repeat) return;
+
+            const key = e.key.toLowerCase();
+            if (/^[a-z]$/.test(key)) {
+              e.preventDefault();
+              this.sound.ensureContext();
+              this.handleLetterInput(key);
+            }
+          });
+        }
+
+        /**
+         * Start or restart a gameplay session in the selected mode via the FSM.
+         */
+        startGame() {
+          this.sound.ensureContext();
+          this.resetGameData();
+          this.fsm.transition(GameState.PLAYING, { mode: this.mode, wave: this.wave });
+          this.lastTime = performance.now();
+          this.spawnEnemy();
+        }
+
+        /**
+         * Return to Start Screen mode configuration overlay.
+         */
+        returnToMenu() {
+          this.resetGameData();
+          this.fsm.transition(GameState.START);
+        }
+
+        /**
+         * Toggle between PLAYING and PAUSED states via the FSM.
+         */
+        togglePause() {
+          if (this.fsm.is(GameState.PLAYING)) {
+            this.fsm.transition(GameState.PAUSED);
+          } else if (this.fsm.is(GameState.PAUSED)) {
+            this.fsm.transition(GameState.PLAYING);
+            this.lastTime = performance.now();
+          }
+        }
+
+        /**
+         * Finish an endless Practice session on demand and display the summary overlay.
+         */
+        finishPracticeSession() {
+          if (this.mode !== GameMode.PRACTICE) return;
+          if (!this.fsm.is(GameState.PLAYING) && !this.fsm.is(GameState.PAUSED)) return;
+          this.triggerGameOver('PRACTICE_SUMMARY');
+        }
+
+        /**
+         * Transition to GAMEOVER, compute final metrics, and populate the learned vocabulary list.
+         * @param {'SHIELD_BROKEN'|'TIME_UP'|'PRACTICE_SUMMARY'} [reason='SHIELD_BROKEN']
+         */
+        triggerGameOver(reason = 'SHIELD_BROKEN') {
+          this.gameOverReason = reason;
+          if (!this.fsm.transition(GameState.GAMEOVER, { mode: this.mode, reason, score: this.score, wave: this.wave })) {
+            return;
+          }
+          this.gameOverTimestamp = performance.now();
+
+          if (this.mode === GameMode.CHALLENGE && this.score > this.highScore) {
+            this.highScore = this.score;
+            store.set('arkatype_vocab_highscore', this.highScore);
+          }
+
+          const totalKeys = this.correctHits + this.mistakes;
+          const accuracy = totalKeys === 0 ? 100 : Math.round((this.correctHits / totalKeys) * 100);
+          const minutes = Math.max(this.activePlaySeconds / 60, 1 / 60);
+          const cpm = this.activePlaySeconds >= 1 ? Math.round(this.correctHits / minutes) : 0;
+          const wpm = Math.round(cpm / 5);
+
+          if (reason === 'PRACTICE_SUMMARY') {
+            this.elGoTitle.textContent = 'VÝSLEDKY TRÉNINKU';
+            this.elGoTitle.classList.add('practice');
+            this.elGoSub.textContent = 'Procvičování slovní zásoby dokončeno';
+          } else if (reason === 'TIME_UP') {
+            this.elGoTitle.textContent = 'ČAS VYPRŠEL!';
+            this.elGoTitle.classList.remove('practice');
+            this.elGoSub.textContent = 'Výzva na čas dokončena';
+          } else {
+            this.elGoTitle.textContent = 'GAME OVER';
+            this.elGoTitle.classList.remove('practice');
+            this.elGoSub.textContent = 'Energetický štít byl prolomen';
+          }
+
+          this.elGoScore.textContent = this.score.toLocaleString('cs-CZ');
+          this.elGoHighScore.textContent = this.highScore.toLocaleString('cs-CZ');
+          this.elGoWave.textContent = this.mode === GameMode.PRACTICE ? '∞' : String(this.wave);
+          this.elGoSpeed.textContent = `${cpm} / ${wpm}`;
+          this.elGoAccuracy.textContent = `${accuracy}%`;
+          this.elGoKills.textContent = String(this.kills);
+
+          this.renderGameOverVocabulary();
+          this.refreshStartHighScore();
+          this.eventBus.emit(GameEvents.GAME_OVER, {
+            mode: this.mode,
+            reason,
+            score: this.score,
+            wave: this.wave,
+            kills: this.kills
+          });
+        }
+
+        /**
+         * Populate the Game Over vocabulary summary with English words, Czech translations,
+         * and the breaching object when applicable.
+         */
+        renderGameOverVocabulary() {
+          if (this.lastBreachItem && this.gameOverReason === 'SHIELD_BROKEN') {
+            this.elGoKillerWordBox.classList.remove('hidden');
+            this.elGoKillerWord.textContent = `${this.lastBreachItem.word} (${this.lastBreachItem.translation})`;
+            this.elGoKillerMeta.textContent = `Tier ${this.lastBreachItem.difficulty}`;
+          } else {
+            this.elGoKillerWordBox.classList.add('hidden');
+          }
+
+          const entries = Array.from(this.learnedWordsMap.values());
+          this.elGoVocabCount.textContent = String(entries.length);
+          this.elGoVocabList.innerHTML = '';
+
+          if (entries.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'vocab-empty';
+            empty.textContent = 'V této hře zatím nebylo sestřeleno žádné slovíčko.';
+            this.elGoVocabList.appendChild(empty);
+            return;
+          }
+
+          for (const entry of entries) {
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = 'vocab-pill';
+            pill.style.borderColor = entry.item.primaryColor;
+            pill.title = `Kategorie: ${entry.item.category} · Tier ${entry.item.difficulty} (Klikni pro výslovnost)`;
+
+            const dot = document.createElement('span');
+            dot.className = 'vocab-dot';
+            dot.style.background = entry.item.primaryColor;
+
+            const wordSpan = document.createElement('span');
+            wordSpan.textContent = `${entry.item.word} —`;
+
+            const trSpan = document.createElement('span');
+            trSpan.className = 'vocab-tr';
+            trSpan.textContent = entry.item.translation;
+
+            pill.appendChild(dot);
+            pill.appendChild(wordSpan);
+            pill.appendChild(trSpan);
+
+            if (entry.count > 1) {
+              const cnt = document.createElement('span');
+              cnt.className = 'vocab-count';
+              cnt.textContent = `×${entry.count}`;
+              pill.appendChild(cnt);
+            }
+
+            pill.addEventListener('click', () => {
+              this.speech.speak(entry.item.word, true);
+            });
+
+            this.elGoVocabList.appendChild(pill);
+          }
+        }
+
+        // =========================================================================
+        // Enemy Spawning via ObjectCatalog & ObjectPool
+        // =========================================================================
+
+        /**
+         * Find a horizontal spawn position minimizing overlap with recently spawned objects.
+         * @param {number} radius
+         * @returns {number}
+         */
+        findSpawnX(radius) {
+          const margin = Math.max(66, radius + 38);
+          let bestX = margin + Math.random() * (W - margin * 2);
+          let bestMinDist = -1;
+
+          for (let attempt = 0; attempt < 12; attempt++) {
+            const candX = margin + Math.random() * (W - margin * 2);
+            let minDist = Infinity;
+            for (const e of this.enemyPool.active) {
+              if (e.y < 210) {
+                const d = Math.abs(e.x - candX);
+                if (d < minDist) minDist = d;
+              }
+            }
+            if (minDist > 105) return candX;
+            if (minDist > bestMinDist) {
+              bestMinDist = minDist;
+              bestX = candX;
+            }
+          }
+          return bestX;
+        }
+
+        /**
+         * Spawn a falling vocabulary object from ObjectCatalog into the enemy ObjectPool.
+         * @returns {boolean}
+         */
+        spawnEnemy() {
+          const cfg = this.getWaveConfig(this.wave);
+          const activeInitials = new Set(this.enemyPool.active.map((e) => e.word[0]));
+          const activeIds = new Set(
+            this.enemyPool.active.map((e) => (e.catalogItem ? e.catalogItem.id : e.word))
+          );
+
+          const allowedLetters =
+            this.mode === GameMode.PRACTICE ? this.selectedLetters : LETTERS;
+
+          const item = this.catalog.pickObject({
+            mode: this.mode,
+            wave: this.wave,
+            allowedLetters,
+            activeInitials,
+            activeIds,
+            recentInitials: this.recentInitials,
+            recentIds: this.recentWordIds
+          });
+          if (!item) return false;
+
+          this.recentInitials.push(item.word[0]);
+          if (this.recentInitials.length > 6) this.recentInitials.shift();
+          this.recentWordIds.push(item.id);
+          if (this.recentWordIds.length > 10) this.recentWordIds.shift();
+
+          const enemy = this.enemyPool.acquire();
+          const speedJitter = 0.92 + Math.random() * 0.18;
+          const difficultySpeedFactor =
+            this.mode === GameMode.PRACTICE
+              ? 1.0
+              : item.difficulty === 3
+                ? 0.88
+                : item.difficulty === 2
+                  ? 0.95
+                  : 1.0;
+
+          enemy.id = this.nextEnemyId++;
+          enemy.catalogItem = item;
+          enemy.word = item.word;
+          enemy.typed = 0;
+          enemy.radius = 28;
+          enemy.iconSize = 24;
+          enemy.x = this.findSpawnX(enemy.radius);
+          enemy.y = 42;
+          enemy.vy = cfg.baseSpeed * difficultySpeedFactor * speedJitter;
+          enemy.swayPhase = Math.random() * Math.PI * 2;
+          enemy.swayFreq = 1.6 + Math.random() * 1.1;
+          enemy.spawnFlash = 0.35;
+          enemy.hitFlash = 0;
+
+          this.waveSpawned++;
+          return true;
+        }
+
+        // =========================================================================
+        // Typing & Laser Combat Logic
+        // =========================================================================
+
+        /**
+         * Release the current target lock and reset its typed progress.
+         */
+        unlockTarget() {
+          if (this.lockedId === null) return;
+          const target = this.enemyPool.active.find((e) => e.id === this.lockedId);
+          if (target) target.typed = 0;
+          const prevId = this.lockedId;
+          this.lockedId = null;
+          this.eventBus.emit(GameEvents.TARGET_UNLOCKED, { targetId: prevId });
+        }
+
+        /**
+         * Process a single lowercase alphabetic key press.
+         * @param {string} key
+         */
+        handleLetterInput(key) {
+          if (this.lockedId !== null) {
+            const target = this.enemyPool.active.find((e) => e.id === this.lockedId);
+            if (!target) {
+              this.lockedId = null;
+            } else {
+              this.processHitOnTarget(target, key);
+              return;
+            }
+          }
+
+          // When unlocked, select the lowest matching target on screen (supports single-letter Practice Mode)
+          const matches = this.enemyPool.active.filter((e) => e.word[0] === key);
+          const match =
+            matches.length > 0
+              ? matches.reduce((lowest, cur) => (cur.y > lowest.y ? cur : lowest), matches[0])
+              : null;
+
+          if (match) {
+            this.lockedId = match.id;
+            this.eventBus.emit(GameEvents.TARGET_LOCKED, { targetId: match.id, word: match.word });
+            this.processHitOnTarget(match, key);
+          } else {
+            this.registerMistake(null);
+          }
+        }
+
+        /**
+         * Validate expected character on locked target, fire laser, and trigger destroy on completion.
+         * @param {Object} target
+         * @param {string} key
+         */
+        processHitOnTarget(target, key) {
+          const expected = target.word[target.typed];
+          if (key === expected) {
+            target.typed++;
+            target.hitFlash = 0.16;
+            target.y = Math.max(32, target.y - 4.5);
+
+            this.correctHits++;
+            this.combo++;
+            if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+
+            this.fireLaserAt(target);
+            this.eventBus.emit(GameEvents.LETTER_HIT, {
+              targetId: target.id,
+              letter: key,
+              step: target.typed,
+              total: target.word.length
+            });
+
+            if (target.typed >= target.word.length) {
+              this.destroyEnemy(target, true);
+            }
+          } else {
+            this.registerMistake(target);
+          }
+          this.updateHud();
+        }
+
+        /**
+         * Handle an incorrect keystroke without breaking target lock.
+         * @param {Object|null} target
+         */
+        registerMistake(target) {
+          this.mistakes++;
+          this.combo = 0;
+          this.shakeTimer = 0.16;
+          this.shakeStrength = 7;
+          this.mistakeFlash = 0.22;
+
+          this.eventBus.emit(GameEvents.TYPING_MISTAKE, {
+            targetId: target ? target.id : null
+          });
+
+          const sx = this.paddle.x;
+          const sy = this.paddle.y - 16;
+          for (let i = 0; i < 6; i++) {
+            const p = this.particlePool.acquire();
+            p.x = sx;
+            p.y = sy;
+            p.vx = (Math.random() - 0.5) * 140;
+            p.vy = -40 - Math.random() * 100;
+            p.life = 0.25;
+            p.maxLife = 0.25;
+            p.size = 2.6;
+            p.color = '#ff3b5c';
+          }
+
+          if (target) {
+            const ft = this.floatingTextPool.acquire();
+            ft.x = target.x;
+            ft.y = target.y - target.radius - 10;
+            ft.text = 'CHYBA!';
+            ft.color = '#ff3b5c';
+            ft.life = 0.45;
+            ft.maxLife = 0.45;
+            ft.vy = -26;
+          }
+          this.updateHud();
+        }
+
+        /**
+         * Spawn a laser beam and impact sparks from the bottom turret to the target.
+         * @param {Object} target
+         */
+        fireLaserAt(target) {
+          const dx = target.x - this.paddle.x;
+          const dy = target.y - (this.paddle.y - 10);
+          const angle = Math.atan2(dy, dx);
+          this.paddle.angle = angle;
+          this.paddle.recoil = 6;
+          this.paddle.muzzleFlash = 0.12;
+
+          const muzzleX = this.paddle.x + Math.cos(angle) * 20;
+          const muzzleY = this.paddle.y - 10 + Math.sin(angle) * 20;
+          const beamColor = target.catalogItem ? target.catalogItem.primaryColor : '#00ff9d';
+
+          const laser = this.laserPool.acquire();
+          laser.x1 = muzzleX;
+          laser.y1 = muzzleY;
+          laser.x2 = target.x;
+          laser.y2 = target.y;
+          laser.color = beamColor;
+          laser.life = 0.14;
+          laser.maxLife = 0.14;
+
+          for (let i = 0; i < 6; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const spd = 60 + Math.random() * 140;
+            const p = this.particlePool.acquire();
+            p.x = target.x;
+            p.y = target.y;
+            p.vx = Math.cos(a) * spd;
+            p.vy = Math.sin(a) * spd;
+            p.life = 0.24;
+            p.maxLife = 0.24;
+            p.size = 2.4;
+            p.color = i % 2 === 0 ? '#00ff9d' : beamColor;
+          }
+        }
+
+        /**
+         * Destroy a falling object, spawn color-matched particles, display its Czech
+         * translation pill upon explosion, update vocabulary history, and emit `ENTITY_DESTROYED`.
+         * @param {Object} enemy
+         * @param {boolean} [byPlayer=true]
+         * @param {boolean} [silent=false]
+         */
+        destroyEnemy(enemy, byPlayer = true, silent = false) {
+          const item = enemy.catalogItem;
+          const ex = enemy.x;
+          const ey = enemy.y;
+          const primary = item ? item.primaryColor : '#00f3ff';
+          const secondary = item ? item.secondaryColor : '#00ff9d';
+          const word = enemy.word;
+
+          if (this.lockedId === enemy.id) {
+            this.lockedId = null;
+          }
+          this.enemyPool.release(enemy);
+          this.waveDestroyed++;
+
+          if (byPlayer) {
+            this.kills++;
+            const comboMult = 1 + Math.min(2.0, Math.floor(this.combo / 5) * 0.25);
+            const tierBonus = item ? item.difficulty * 35 : 35;
+            const basePts = word.length * 25 + tierBonus + this.wave * 15;
+            const pts = Math.round(basePts * comboMult);
+            this.score += pts;
+
+            if (item) {
+              const existing = this.learnedWordsMap.get(item.id);
+              if (existing) {
+                existing.count++;
+              } else {
+                this.learnedWordsMap.set(item.id, { item, count: 1 });
+              }
+            }
+
+            // Prominent Czech translation floating pill displayed after explosion
+            const ft = this.floatingTextPool.acquire();
+            ft.x = Math.max(85, Math.min(W - 85, ex));
+            ft.y = Math.max(54, ey - 4);
+            ft.text = item ? item.translation : word;
+            ft.subText = `${word}  •  +${pts}`;
+            ft.bgPill = true;
+            ft.borderColor = primary;
+            ft.color = '#ffffff';
+            ft.life = 1.45;
+            ft.maxLife = 1.45;
+            ft.vy = -30;
+            ft.scale = 1.2;
+
+            this.eventBus.emit(GameEvents.ENTITY_DESTROYED, {
+              word,
+              translation: item ? item.translation : '',
+              item,
+              byPlayer: true,
+              silent,
+              points: pts
+            });
+          }
+
+          // Color-matched particle burst using object's primaryColor & secondaryColor
+          for (let i = 0; i < 24; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const spd = 55 + Math.random() * 210;
+            const p = this.particlePool.acquire();
+            p.x = ex;
+            p.y = ey;
+            p.vx = Math.cos(a) * spd;
+            p.vy = Math.sin(a) * spd;
+            p.life = 0.42 + Math.random() * 0.26;
+            p.maxLife = 0.68;
+            p.size = 2.6 + Math.random() * 3.2;
+            p.color = i % 4 === 0 ? '#ffffff' : i % 2 === 0 ? primary : secondary;
+          }
+
+          const sw = this.shockwavePool.acquire();
+          sw.x = ex;
+          sw.y = ey;
+          sw.r = 8;
+          sw.maxR = 62;
+          sw.color = primary;
+          sw.life = 0.34;
+          sw.maxLife = 0.34;
+
+          this.updateHud();
+        }
+
+        // =========================================================================
+        // Update Loop
+        // =========================================================================
+
+        /**
+         * Main animation frame loop.
+         * @param {number} now
+         */
+        loop(now) {
+          const dt = Math.min(0.05, Math.max(0.001, (now - this.lastTime) / 1000));
+          this.lastTime = now;
+
+          this.updateStars(dt);
+
+          if (this.fsm.is(GameState.PLAYING)) {
+            this.updatePlaying(dt);
+          } else {
+            this.paddle.x += (W / 2 + Math.sin(now * 0.0012) * 90 - this.paddle.x) * Math.min(1, dt * 3);
+            this.updateVisualEffects(dt);
+          }
+
+          this.render(now);
+          requestAnimationFrame((t) => this.loop(t));
+        }
+
+        /**
+         * @param {number} dt
+         */
+        updateStars(dt) {
+          const warpBoost = this.waveClearTimer > 0 ? 3.2 : this.fsm.is(GameState.PLAYING) ? 1.0 : 0.45;
+          for (const s of this.stars) {
+            s.y += s.speed * warpBoost * dt;
+            s.twinkle += dt * 3;
+            if (s.y > H + 4) {
+              s.y = -4;
+              s.x = Math.random() * W;
+            }
+          }
+        }
+
+        /**
+         * Advance pooled VFX particles, lasers, shockwaves, and floating texts.
+         * @param {number} dt
+         */
+        updateVisualEffects(dt) {
+          if (this.shakeTimer > 0) this.shakeTimer = Math.max(0, this.shakeTimer - dt);
+          if (this.damageFlash > 0) this.damageFlash = Math.max(0, this.damageFlash - dt * 2.5);
+          if (this.mistakeFlash > 0) this.mistakeFlash = Math.max(0, this.mistakeFlash - dt * 4);
+          if (this.waveBannerTimer > 0) this.waveBannerTimer = Math.max(0, this.waveBannerTimer - dt);
+
+          this.paddle.recoil = Math.max(0, this.paddle.recoil - dt * 40);
+          this.paddle.muzzleFlash = Math.max(0, this.paddle.muzzleFlash - dt);
+
+          this.laserPool.releaseWhere((l) => {
+            l.life -= dt;
+            return l.life <= 0;
+          });
+
+          this.particlePool.releaseWhere((p) => {
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vx *= 0.97;
+            p.vy *= 0.97;
+            p.life -= dt;
+            return p.life <= 0;
+          });
+
+          this.shockwavePool.releaseWhere((sw) => {
+            sw.life -= dt;
+            const prog = 1 - sw.life / sw.maxLife;
+            sw.r = sw.maxR * (1 - Math.pow(1 - prog, 2.2));
+            return sw.life <= 0;
+          });
+
+          this.floatingTextPool.releaseWhere((ft) => {
+            ft.y += ft.vy * dt;
+            ft.life -= dt;
+            return ft.life <= 0;
+          });
+        }
+
+        /**
+         * Advance gameplay simulation during PLAYING state.
+         * @param {number} dt
+         */
+        updatePlaying(dt) {
+          this.activePlaySeconds += dt;
+          this.updateVisualEffects(dt);
+
+          // Countdown timer in Timed Challenge Mode
+          if (this.mode === GameMode.CHALLENGE) {
+            const prevSec = Math.ceil(this.timeLeft);
+            this.timeLeft = Math.max(0, this.timeLeft - dt);
+            if (Math.ceil(this.timeLeft) !== prevSec) {
+              this.updateHud();
+            }
+            if (this.timeLeft <= 0) {
+              this.triggerGameOver('TIME_UP');
+              return;
+            }
+          }
+
+          // Wave clear celebration & progression (Challenge mode)
+          if (this.waveClearTimer > 0) {
+            this.waveClearTimer -= dt;
+            if (this.waveClearTimer <= 0) {
+              this.wave++;
+              const nextCfg = this.getWaveConfig(this.wave);
+              this.waveSpawned = 0;
+              this.waveDestroyed = 0;
+              this.waveTotal = nextCfg.count;
+              this.spawnTimer = 0.4;
+              this.waveBannerTimer = 1.65;
+              this.updateHud();
+            }
+            return;
+          }
+
+          const cfg = this.getWaveConfig(this.wave);
+
+          // Spawning enemies
+          this.spawnTimer -= dt;
+          if (this.spawnTimer <= 0 && this.waveSpawned < cfg.count && this.enemyPool.activeCount < cfg.maxActive) {
+            const ok = this.spawnEnemy();
+            this.spawnTimer = ok ? cfg.spawnInterval * (0.85 + Math.random() * 0.3) : 0.35;
+          }
+
+          // Update falling objects (iterate backwards because collision releases into pool)
+          const activeEnemies = this.enemyPool.active;
+          for (let i = activeEnemies.length - 1; i >= 0; i--) {
+            const e = activeEnemies[i];
+            e.y += e.vy * dt;
+            e.swayPhase += dt * e.swayFreq;
+            e.spawnFlash = Math.max(0, e.spawnFlash - dt);
+            e.hitFlash = Math.max(0, e.hitFlash - dt);
+            e.x += Math.sin(e.swayPhase) * 10 * dt;
+
+            if (e.x < 52) e.x = 52;
+            else if (e.x > W - 52) e.x = W - 52;
+
+            // Check bottom defense line
+            if (e.y + e.radius + 26 >= SHIELD_Y) {
+              if (this.mode === GameMode.PRACTICE) {
+                this.onPracticeEnemyPass(e);
+              } else {
+                this.onEnemyHitShield(e);
+                if (this.fsm.is(GameState.GAMEOVER)) return;
+              }
+            }
+          }
+
+          // Smooth Arkanoid paddle tracking toward locked target (or lowest threat)
+          let trackTarget = activeEnemies.find((e) => e.id === this.lockedId);
+          if (!trackTarget && activeEnemies.length > 0) {
+            trackTarget = activeEnemies.reduce((low, cur) => (cur.y > low.y ? cur : low), activeEnemies[0]);
+          }
+          const desiredX = trackTarget ? Math.max(66, Math.min(W - 66, trackTarget.x)) : W / 2;
+          this.paddle.x += (desiredX - this.paddle.x) * Math.min(1, dt * 10);
+
+          const desiredAngle = trackTarget
+            ? Math.atan2(trackTarget.y - (this.paddle.y - 10), trackTarget.x - this.paddle.x)
+            : -Math.PI / 2;
+          this.paddle.angle += (desiredAngle - this.paddle.angle) * Math.min(1, dt * 16);
+
+          // Check wave completion (Challenge mode only)
+          if (this.mode === GameMode.CHALLENGE && this.waveSpawned >= cfg.count && activeEnemies.length === 0) {
+            const waveBonus = this.wave * 200;
+            this.score += waveBonus;
+            this.timeLeft += 10;
+            this.waveClearTimer = 1.7;
+            this.eventBus.emit(GameEvents.WAVE_CLEARED, { wave: this.wave, bonus: waveBonus });
+
+            const ft = this.floatingTextPool.acquire();
+            ft.x = W / 2;
+            ft.y = H * 0.42;
+            ft.text = `VLNA ${this.wave} DOKONČENA! +${waveBonus}`;
+            ft.subText = '+10 s bonusového času';
+            ft.bgPill = true;
+            ft.borderColor = '#ffd166';
+            ft.color = '#ffd166';
+            ft.life = 1.55;
+            ft.maxLife = 1.55;
+            ft.vy = -20;
+            ft.scale = 1.25;
+            this.updateHud();
+          }
+
+          if (Math.floor((this.activePlaySeconds - dt) * 2) !== Math.floor(this.activePlaySeconds * 2)) {
+            this.updateHud();
+          }
+        }
+
+        /**
+         * In Practice mode, gently clear passed objects with a Czech translation reminder.
+         * @param {Object} enemy
+         */
+        onPracticeEnemyPass(enemy) {
+          const item = enemy.catalogItem;
+          const ex = enemy.x;
+          const word = enemy.word;
+          this.destroyEnemy(enemy, false);
+          this.combo = 0;
+
+          const ft = this.floatingTextPool.acquire();
+          ft.x = Math.max(85, Math.min(W - 85, ex));
+          ft.y = SHIELD_Y - 40;
+          ft.text = item ? item.translation : word;
+          ft.subText = `${word} (připomenutí)`;
+          ft.bgPill = true;
+          ft.borderColor = '#ffd166';
+          ft.color = '#ffffff';
+          ft.life = 1.35;
+          ft.maxLife = 1.35;
+          ft.vy = -24;
+          ft.scale = 1.1;
+          this.updateHud();
+        }
+
+        /**
+         * Handle a vocabulary object breaching the bottom defense shield in Challenge mode.
+         * @param {Object} enemy
+         */
+        onEnemyHitShield(enemy) {
+          this.lastBreachItem = enemy.catalogItem;
+          const ex = enemy.x;
+          const word = enemy.word;
+
+          this.destroyEnemy(enemy, false);
+          this.shield = Math.max(0, this.shield - 1);
+          this.combo = 0;
+          this.damageFlash = 1.0;
+          this.shakeTimer = 0.3;
+          this.shakeStrength = 12;
+
+          this.eventBus.emit(GameEvents.SHIELD_HIT, { word, shieldLeft: this.shield });
+
+          const ft = this.floatingTextPool.acquire();
+          ft.x = ex;
+          ft.y = SHIELD_Y - 22;
+          ft.text = `ŠTÍT ZASAŽEN! (${word})`;
+          ft.color = '#ff3b5c';
+          ft.life = 1.0;
+          ft.maxLife = 1.0;
+          ft.vy = -34;
+
+          this.updateHud();
+          if (this.shield <= 0) {
+            this.triggerGameOver('SHIELD_BROKEN');
+          }
+        }
+
+        /**
+         * Format seconds into MM:SS string.
+         * @param {number} totalSeconds
+         * @returns {string}
+         */
+        formatTime(totalSeconds) {
+          const s = Math.max(0, Math.ceil(totalSeconds));
+          const mins = Math.floor(s / 60);
+          const secs = s % 60;
+          return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        /**
+         * Synchronize DOM HUD metrics for the active mode.
+         */
+        updateHud() {
+          const isPractice = this.mode === GameMode.PRACTICE;
+
+          this.elScore.textContent = this.score.toLocaleString('cs-CZ');
+          const comboMult = 1 + Math.min(2.0, Math.floor(this.combo / 5) * 0.25);
+          this.elCombo.textContent = comboMult > 1 ? `×${comboMult.toFixed(2).replace(/\.00$/, '')}` : '';
+
+          if (isPractice) {
+            this.elWaveLabel.textContent = 'Rychlost';
+            this.elWave.textContent = `${this.practiceSpeedMult.toFixed(1)}×`;
+            this.elWaveBar.style.width = '100%';
+            this.elTimerLabel.textContent = 'Limit';
+            this.elTimer.textContent = '∞';
+            this.elTimer.parentElement.classList.remove('urgent');
+            this.elShieldLabel.textContent = 'Režim';
+            this.elShieldPipsWrap.style.display = 'none';
+            this.elPracticeBadge.style.display = 'inline-block';
+            const cnt = this.selectedLetters.size;
+            this.elPracticeBadge.textContent =
+              cnt === LETTERS.length ? 'A–Z' : `${Array.from(this.selectedLetters).slice(0, 3).join(',')}${cnt > 3 ? '…' : ''}`;
+          } else {
+            this.elWaveLabel.textContent = 'Vlna';
+            this.elWave.textContent = String(this.wave);
+            const wavePct = Math.min(100, Math.round((this.waveDestroyed / Math.max(1, this.waveTotal)) * 100));
+            this.elWaveBar.style.width = `${wavePct}%`;
+
+            this.elTimerLabel.textContent = 'Čas';
+            this.elTimer.textContent = this.formatTime(this.timeLeft);
+            this.elTimer.parentElement.classList.toggle('urgent', this.timeLeft <= 15);
+
+            this.elShieldLabel.innerHTML = `Štít (<span id="hudShieldText">${this.shield}/${MAX_SHIELD}</span>)`;
+            this.elShieldText = document.getElementById('hudShieldText');
+            this.elShieldPipsWrap.style.display = 'flex';
+            this.elPracticeBadge.style.display = 'none';
+            this.elShieldPips.forEach((pip, i) => {
+              pip.classList.toggle('lost', i >= this.shield);
+              pip.classList.toggle('low', this.shield === 1 && i === 0);
+            });
+          }
+
+          this.elBtnFinishPractice.classList.toggle('hidden', !isPractice);
+          this.elBtnFinishFromPause.classList.toggle('hidden', !isPractice);
+
+          const totalKeys = this.correctHits + this.mistakes;
+          const acc = totalKeys === 0 ? 100 : Math.round((this.correctHits / totalKeys) * 100);
+          this.elAccuracy.textContent = `${acc}%`;
+
+          if (this.activePlaySeconds >= 2 && this.correctHits > 0) {
+            const cpm = Math.round((this.correctHits / this.activePlaySeconds) * 60);
+            this.elCpm.textContent = `${cpm} cpm`;
+          } else {
+            this.elCpm.textContent = '';
+          }
+        }
+
+        // =========================================================================
+        // Rendering (Canvas 2D)
+        // =========================================================================
+
+        /**
+         * Render complete scene frame.
+         * @param {number} now
+         */
+        render(now) {
+          const ctx = this.ctx;
+          ctx.save();
+
+          if (this.shakeTimer > 0) {
+            const intensity = this.shakeStrength * (this.shakeTimer / 0.3);
+            ctx.translate((Math.random() - 0.5) * intensity * 2, (Math.random() - 0.5) * intensity * 2);
+          }
+
+          // Deep arcade backdrop
+          const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+          bgGrad.addColorStop(0, '#040612');
+          bgGrad.addColorStop(0.65, '#070c20');
+          bgGrad.addColorStop(1, '#0b102a');
+          ctx.fillStyle = bgGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          // Cyber perspective floor grid near shield
+          ctx.save();
+          ctx.strokeStyle = 'rgba(0, 243, 255, 0.07)';
+          ctx.lineWidth = 1;
+          for (let gx = 40; gx < W; gx += 48) {
+            ctx.beginPath();
+            ctx.moveTo(gx, SHIELD_Y - 120);
+            ctx.lineTo(W / 2 + (gx - W / 2) * 1.45, H);
+            ctx.stroke();
+          }
+          for (let gy = SHIELD_Y - 100; gy <= H; gy += 28) {
+            ctx.beginPath();
+            ctx.moveTo(0, gy);
+            ctx.lineTo(W, gy);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          // Stars
+          for (const s of this.stars) {
+            const tw = 0.65 + 0.35 * Math.sin(s.twinkle);
+            ctx.globalAlpha = s.alpha * tw;
+            ctx.fillStyle = s.tint;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+
+          this.drawArcadeRails(ctx, now);
+
+          // Dotted sightline from turret to locked target
+          const lockedEnemy = this.enemyPool.active.find((e) => e.id === this.lockedId);
+          if (lockedEnemy) {
+            ctx.save();
+            ctx.setLineDash([6, 7]);
+            ctx.strokeStyle = this.mistakeFlash > 0 ? 'rgba(255, 59, 92, 0.65)' : 'rgba(0, 255, 157, 0.42)';
+            ctx.lineWidth = 1.6;
+            ctx.beginPath();
+            ctx.moveTo(this.paddle.x, this.paddle.y - 14);
+            ctx.lineTo(lockedEnemy.x, lockedEnemy.y);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // Shockwaves
+          this.shockwavePool.forEachActive((sw) => {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, sw.life / sw.maxLife);
+            ctx.strokeStyle = sw.color;
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = sw.color;
+            ctx.beginPath();
+            ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+          });
+
+          // Falling visual vocabulary objects
+          this.enemyPool.forEachActive((e) => {
+            this.drawEnemyBody(ctx, e, e.id === this.lockedId, now);
+          });
+
+          // Laser beams
+          this.laserPool.forEachActive((l) => {
+            const alpha = Math.max(0, l.life / l.maxLife);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.lineCap = 'round';
+            ctx.strokeStyle = l.color;
+            ctx.lineWidth = 7;
+            ctx.shadowBlur = 18;
+            ctx.shadowColor = l.color;
+            ctx.beginPath();
+            ctx.moveTo(l.x1, l.y1);
+            ctx.lineTo(l.x2, l.y2);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2.2;
+            ctx.shadowBlur = 0;
+            ctx.beginPath();
+            ctx.moveTo(l.x1, l.y1);
+            ctx.lineTo(l.x2, l.y2);
+            ctx.stroke();
+            ctx.restore();
+          });
+
+          // Particles
+          this.particlePool.forEachActive((p) => {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = p.color;
+            ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+            ctx.restore();
+          });
+
+          // Defense Shield & Arkanoid Laser Paddle
+          this.drawDefenseLine(ctx, now);
+          this.drawPaddle(ctx);
+
+          // High-contrast word labels directly below each visual object
+          this.enemyPool.forEachActive((e) => {
+            this.drawEnemyLabel(ctx, e, e.id === this.lockedId);
+          });
+
+          // Floating texts & Czech translation badges after explosions
+          this.floatingTextPool.forEachActive((ft) => {
+            const alpha = Math.min(1, (ft.life / ft.maxLife) * 1.5);
+            ctx.save();
+            ctx.globalAlpha = alpha;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            if (ft.bgPill) {
+              ctx.font = "900 18px 'Segoe UI', system-ui, sans-serif";
+              const mainW = ctx.measureText(ft.text).width;
+              ctx.font = "700 11px 'JetBrains Mono', Consolas, monospace";
+              const subW = ft.subText ? ctx.measureText(ft.subText).width : 0;
+              const pillW = Math.max(mainW, subW) + 26;
+              const pillH = ft.subText ? 44 : 30;
+              const bx = Math.max(pillW / 2 + 8, Math.min(W - pillW / 2 - 8, ft.x));
+
+              ctx.fillStyle = 'rgba(5, 11, 28, 0.94)';
+              ctx.strokeStyle = ft.borderColor || '#00ff9d';
+              ctx.lineWidth = 2;
+              ctx.shadowBlur = 14;
+              ctx.shadowColor = ft.borderColor || '#00ff9d';
+              ctx.beginPath();
+              ctx.roundRect(bx - pillW / 2, ft.y - pillH / 2, pillW, pillH, 10);
+              ctx.fill();
+              ctx.stroke();
+              ctx.shadowBlur = 0;
+
+              if (ft.subText) {
+                ctx.font = "700 11px 'JetBrains Mono', Consolas, monospace";
+                ctx.fillStyle = '#00ff9d';
+                ctx.fillText(ft.subText, bx, ft.y - 10);
+
+                ctx.font = "900 18px 'Segoe UI', system-ui, sans-serif";
+                ctx.fillStyle = '#ffd166';
+                ctx.fillText(ft.text, bx, ft.y + 9);
+              } else {
+                ctx.font = "900 18px 'Segoe UI', system-ui, sans-serif";
+                ctx.fillStyle = ft.color;
+                ctx.fillText(ft.text, bx, ft.y);
+              }
+            } else {
+              ctx.font = `900 ${Math.round(15 * (ft.scale || 1))}px 'JetBrains Mono', Consolas, monospace`;
+              ctx.fillStyle = ft.color;
+              ctx.shadowBlur = 12;
+              ctx.shadowColor = ft.color;
+              ctx.fillText(ft.text, ft.x, ft.y);
+            }
+            ctx.restore();
+          });
+
+          // Wave / Mode Banner
+          if (this.waveBannerTimer > 0 && this.fsm.is(GameState.PLAYING)) {
+            const a = Math.min(1, this.waveBannerTimer * 2);
+            const title = this.mode === GameMode.PRACTICE ? 'PROCVIČOVÁNÍ' : `VLNA ${this.wave}`;
+            const subtitle =
+              this.mode === GameMode.PRACTICE
+                ? `Písmena: ${Array.from(this.selectedLetters).length === LETTERS.length ? 'A–Z' : Array.from(this.selectedLetters).join(', ')} · ${this.practiceSpeedMult.toFixed(1)}×`
+                : this.wave === 1
+                  ? 'Úroveň 1 (Krátká slova)'
+                  : this.wave === 2
+                    ? 'Úroveň 1–2'
+                    : 'Všechny úrovně 1–3';
+
+            ctx.save();
+            ctx.globalAlpha = a;
+            ctx.fillStyle = 'rgba(6, 12, 32, 0.84)';
+            ctx.strokeStyle = this.mode === GameMode.PRACTICE ? '#00ff9d' : '#00f3ff';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(W / 2 - 165, H * 0.28 - 32, 330, 64, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.font = "900 21px 'JetBrains Mono', Consolas, monospace";
+            ctx.fillStyle = this.mode === GameMode.PRACTICE ? '#00ff9d' : '#00f3ff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(title, W / 2, H * 0.28 - 9);
+
+            ctx.font = "700 12px 'Segoe UI', sans-serif";
+            ctx.fillStyle = '#ffd166';
+            ctx.fillText(subtitle, W / 2, H * 0.28 + 15);
+            ctx.restore();
+          }
+
+          if (this.damageFlash > 0) {
+            ctx.save();
+            ctx.fillStyle = `rgba(255, 38, 75, ${this.damageFlash * 0.28})`;
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+          }
+
+          ctx.restore();
+        }
+
+        drawArcadeRails(ctx, now) {
+          ctx.save();
+          const pulse = 0.5 + 0.5 * Math.sin(now * 0.004);
+          const railColor =
+            this.damageFlash > 0
+              ? '#ff3b5c'
+              : this.mode === GameMode.PRACTICE
+                ? '#00ff9d'
+                : '#00f3ff';
+
+          ctx.strokeStyle = railColor;
+          ctx.globalAlpha = 0.25 + pulse * 0.15;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(8, 12);
+          ctx.lineTo(8, SHIELD_Y - 12);
+          ctx.moveTo(W - 8, 12);
+          ctx.lineTo(W - 8, SHIELD_Y - 12);
+          ctx.stroke();
+
+          ctx.globalAlpha = 0.22;
+          for (let y = 40; y < SHIELD_Y - 20; y += 64) {
+            ctx.fillStyle = railColor;
+            ctx.fillRect(8, y, 6, 2);
+            ctx.fillRect(W - 14, y, 6, 2);
+          }
+          ctx.restore();
+        }
+
+        drawDefenseLine(ctx, now) {
+          ctx.save();
+          if (this.mode === GameMode.PRACTICE) {
+            ctx.globalAlpha = 0.55;
+            ctx.fillStyle = '#00ff9d';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00ff9d';
+            ctx.beginPath();
+            ctx.roundRect(22, SHIELD_Y - 2, W - 44, 4, 2);
+            ctx.fill();
+            ctx.restore();
+            return;
+          }
+
+          const segGap = 10;
+          const totalW = W - 44;
+          const segW = (totalW - segGap * (MAX_SHIELD - 1)) / MAX_SHIELD;
+          const startX = 22;
+
+          for (let i = 0; i < MAX_SHIELD; i++) {
+            const x = startX + i * (segW + segGap);
+            if (i < this.shield) {
+              const lowUrgent = this.shield === 1 ? 0.55 + 0.45 * Math.sin(now * 0.015) : 1;
+              const col = this.shield === 1 ? '#ff3b5c' : '#00f3ff';
+              ctx.globalAlpha = lowUrgent;
+              ctx.fillStyle = col;
+              ctx.shadowBlur = 12;
+              ctx.shadowColor = col;
+              ctx.beginPath();
+              ctx.roundRect(x, SHIELD_Y - 3, segW, 6, 3);
+              ctx.fill();
+            } else {
+              ctx.globalAlpha = 0.35;
+              ctx.setLineDash([5, 5]);
+              ctx.strokeStyle = '#ff3b5c';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(x, SHIELD_Y - 2, segW, 4);
+              ctx.setLineDash([]);
+            }
+          }
+          ctx.restore();
+        }
+
+        drawPaddle(ctx) {
+          const p = this.paddle;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+
+          ctx.save();
+          ctx.translate(0, -10);
+          ctx.rotate(p.angle + Math.PI / 2);
+          const rec = p.recoil;
+          ctx.fillStyle = '#a4c8ff';
+          ctx.fillRect(-7, -20 + rec, 4, 14);
+          ctx.fillRect(3, -20 + rec, 4, 14);
+          ctx.fillStyle = '#00ff9d';
+          ctx.fillRect(-7, -22 + rec, 4, 3);
+          ctx.fillRect(3, -22 + rec, 4, 3);
+
+          if (p.muzzleFlash > 0) {
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 16;
+            ctx.shadowColor = '#00ff9d';
+            ctx.beginPath();
+            ctx.arc(-5, -23 + rec, 4, 0, Math.PI * 2);
+            ctx.arc(5, -23 + rec, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+          ctx.restore();
+
+          const hw = p.width / 2;
+          const hh = p.height / 2;
+          ctx.shadowBlur = 16;
+          ctx.shadowColor = '#00f3ff';
+
+          const bodyGrad = ctx.createLinearGradient(-hw, -hh, -hw, hh);
+          bodyGrad.addColorStop(0, '#eef7ff');
+          bodyGrad.addColorStop(0.45, '#59b7ff');
+          bodyGrad.addColorStop(1, '#103b73');
+
+          ctx.fillStyle = bodyGrad;
+          ctx.beginPath();
+          ctx.roundRect(-hw, -hh, p.width, p.height, hh);
+          ctx.fill();
+
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = '#ff5722';
+          ctx.fillStyle = '#ff5722';
+          ctx.beginPath();
+          ctx.roundRect(-hw, -hh, 18, p.height, [hh, 2, 2, hh]);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.roundRect(hw - 18, -hh, 18, p.height, [2, hh, hh, 2]);
+          ctx.fill();
+
+          ctx.shadowBlur = 12;
+          ctx.shadowColor = '#00ff9d';
+          ctx.fillStyle = '#00ff9d';
+          ctx.beginPath();
+          ctx.roundRect(-14, -3, 28, 6, 3);
+          ctx.fill();
+
+          ctx.restore();
+        }
+
+        /**
+         * Draw a falling object using its encapsulated `catalogItem.draw(ctx, size)` vector method.
+         * @param {CanvasRenderingContext2D} ctx
+         * @param {Object} e
+         * @param {boolean} isLocked
+         * @param {number} now
+         */
+        drawEnemyBody(ctx, e, isLocked, now) {
+          const item = e.catalogItem;
+          if (!item) return;
+
+          ctx.save();
+          ctx.translate(e.x, e.y);
+
+          if (e.spawnFlash > 0) {
+            ctx.globalAlpha = Math.max(0.25, 1 - e.spawnFlash);
+          }
+
+          if (isLocked) {
+            ctx.save();
+            const r = e.radius + 9 + Math.sin(now * 0.015) * 2;
+            const b = 8;
+            ctx.strokeStyle = this.mistakeFlash > 0 ? '#ff3b5c' : '#00ff9d';
+            ctx.lineWidth = 2.5;
+            ctx.shadowBlur = 14;
+            ctx.shadowColor = ctx.strokeStyle;
+
+            for (const [cx, cy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+              ctx.beginPath();
+              ctx.moveTo(cx * r, cy * (r - b));
+              ctx.lineTo(cx * r, cy * r);
+              ctx.lineTo(cx * (r - b), cy * r);
+              ctx.stroke();
+            }
+            ctx.restore();
+          }
+
+          ctx.save();
+          const haloGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, e.radius);
+          haloGrad.addColorStop(0, 'rgba(12, 22, 52, 0.92)');
+          haloGrad.addColorStop(0.75, 'rgba(9, 16, 40, 0.85)');
+          haloGrad.addColorStop(1, 'rgba(9, 16, 40, 0.35)');
+          ctx.fillStyle = haloGrad;
+          ctx.strokeStyle = e.hitFlash > 0 ? '#ffffff' : isLocked ? '#00ff9d' : item.primaryColor;
+          ctx.lineWidth = isLocked ? 2.4 : 1.7;
+          ctx.shadowBlur = isLocked ? 18 : 11;
+          ctx.shadowColor = e.hitFlash > 0 ? '#ffffff' : item.primaryColor;
+          ctx.beginPath();
+          ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.save();
+          const swayAngle = Math.sin(e.swayPhase) * 0.08;
+          const hitScale = e.hitFlash > 0 ? 1.12 : 1.0;
+          ctx.rotate(swayAngle);
+          ctx.scale(hitScale, hitScale);
+          item.draw(ctx, e.iconSize);
+          ctx.restore();
+
+          ctx.restore();
+        }
+
+        /**
+         * Draw high-contrast English word label directly below the falling visual object,
+         * progressively highlighting typed characters as the player fires lasers.
+         * @param {CanvasRenderingContext2D} ctx
+         * @param {Object} e
+         * @param {boolean} isLocked
+         */
+        drawEnemyLabel(ctx, e, isLocked) {
+          const item = e.catalogItem;
+          const primary = item ? item.primaryColor : '#00f3ff';
+
+          ctx.save();
+          ctx.font = "800 17px 'JetBrains Mono', 'Fira Code', 'Cascadia Code', Consolas, monospace";
+          const padX = 11;
+          const totalTextW = ctx.measureText(e.word).width;
+          const boxW = totalTextW + padX * 2;
+          const boxH = 26;
+
+          const lx = Math.max(boxW / 2 + 10, Math.min(W - boxW / 2 - 10, e.x));
+          const ly = Math.min(SHIELD_Y - 16, e.y + e.radius + 20);
+
+          ctx.fillStyle = isLocked ? 'rgba(4, 24, 26, 0.96)' : 'rgba(4, 8, 22, 0.94)';
+          ctx.strokeStyle = isLocked
+            ? this.mistakeFlash > 0
+              ? '#ff3b5c'
+              : '#00ff9d'
+            : primary;
+          ctx.lineWidth = isLocked ? 2.2 : 1.5;
+          if (isLocked) {
+            ctx.shadowBlur = 12;
+            ctx.shadowColor = ctx.strokeStyle;
+          }
+
+          ctx.beginPath();
+          ctx.roundRect(lx - boxW / 2, ly - boxH / 2, boxW, boxH, 7);
+          ctx.fill();
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+
+          const startTextX = lx - totalTextW / 2;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+
+          let curX = startTextX;
+          for (let i = 0; i < e.word.length; i++) {
+            const ch = e.word[i];
+            const cw = ctx.measureText(ch).width;
+
+            if (i < e.typed) {
+              ctx.fillStyle = 'rgba(0, 255, 157, 0.25)';
+              ctx.beginPath();
+              ctx.roundRect(curX - 1, ly - 10, cw + 2, 20, 3);
+              ctx.fill();
+
+              ctx.fillStyle = '#00ff9d';
+              ctx.fillText(ch, curX, ly + 0.5);
+            } else if (i === e.typed) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillText(ch, curX, ly + 0.5);
+              if (isLocked) {
+                ctx.fillStyle = '#ffd166';
+                ctx.fillRect(curX, ly + 9, Math.max(4, cw - 1), 2);
+              }
+            } else {
+              ctx.fillStyle = isLocked ? '#b7d4f5' : '#eaf6ff';
+              ctx.fillText(ch, curX, ly + 0.5);
+            }
+
+            curX += cw;
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // Bootstrap application from letter-partitioned word registry
+      const catalogDatabase = Array.isArray(window.OBJECT_DATABASE) ? window.OBJECT_DATABASE : [];
+      const objectCatalog = new ObjectCatalog(catalogDatabase);
+      window.arkatypeVocab = new VocabArcadeGame(objectCatalog);
+    })();
+  </script>
+</body>
+</html>
